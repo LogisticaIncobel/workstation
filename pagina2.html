@@ -17,24 +17,20 @@
       justify-content: center;
       align-items: center;
     }
-    .container {
-      background: white;
-      padding: 40px;
-      border-radius: 12px;
-      width: 80%;
-      max-width: 600px;
-    }
     .title {
-      font-size: 24px;
-      margin-bottom: 20px;
-    }
-    .subtitle {
-      font-size: 32px;
-      font-weight: bold;
-      color: #001f3f;
+      font-size: 28px;
       margin-bottom: 30px;
     }
+    .white-box {
+      background: white;
+      color: #001f3f;
+      padding: 60px;
+      border-radius: 12px;
+      font-size: 36px;
+      font-weight: bold;
+    }
     .continue-button {
+      margin-top: 40px;
       display: flex;
       align-items: center;
       gap: 10px;
@@ -52,17 +48,17 @@
   </style>
 </head>
 <body>
-  <h1>Workstation Incobel</h1>
-  <div class="container">
-    <div class="subtitle">SONHO</div>
-    <button class="continue-button" onclick="continuar()">
-      Continuar &#9654;
-    </button>
-  </div>
+  <div class="title">Workstation Incobel</div>
+
+  <div class="white-box">SONHO</div>
+
+  <button class="continue-button" onclick="continuar()">
+    Continuar &#9654;
+  </button>
 
   <script>
     function continuar() {
-      window.location.href = \"pagina3.html\";
+      window.location.href = "pagina3.html";
     }
   </script>
 </body>
