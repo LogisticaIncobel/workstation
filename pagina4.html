@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang=\"pt-br\">
+<html lang="pt-br">
 <head>
-  <meta charset=\"UTF-8\" />
-  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Viagens</title>
   <style>
     body {
@@ -14,8 +14,8 @@
     }
     .header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 10px;
     }
     .back-button {
       background: none;
@@ -24,30 +24,36 @@
       font-size: 24px;
       cursor: pointer;
     }
+    .title {
+      font-size: 24px;
+    }
     .indicator {
       background: white;
       color: #001f3f;
       padding: 20px;
       margin: 20px 0;
       border-radius: 8px;
+      text-align: center;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
-  <div class=\"header\">
-    <h1>Incobel</h1>
-    <button class=\"back-button\" onclick=\"voltar()\">&#9664;</button>
+  <div class="header">
+    <button class="back-button" onclick="voltar()">&#9664;</button>
+    <div class="title">Incobel</div>
   </div>
+
   <h2>Workstation Incobel</h2>
 
-  <div class=\"indicator\">Quantidade de Viagens</div>
-  <div class=\"indicator\">Média por Litro</div>
-  <div class=\"indicator\">Km Rodado</div>
-  <div class=\"indicator\">Volume Hecto</div>
+  <div class="indicator">Quantidade de Viagens</div>
+  <div class="indicator">Média por Litro</div>
+  <div class="indicator">Km Rodado</div>
+  <div class="indicator">Volume Hecto</div>
 
   <script>
     function voltar() {
-      window.location.href = \"pagina3.html\";
+      window.location.href = "pagina3.html";
     }
   </script>
 </body>
