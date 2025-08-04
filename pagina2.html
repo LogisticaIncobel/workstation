@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SONHO</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #001f3f;
+      color: white;
+      text-align: center;
+      height: 100vh;
+      display: flex;
+      flex-direction: column;
+      justify-content: center;
+      align-items: center;
+    }
+    .container {
+      background: white;
+      padding: 40px;
+      border-radius: 12px;
+      width: 80%;
+      max-width: 600px;
+    }
+    .title {
+      font-size: 24px;
+      margin-bottom: 20px;
+    }
+    .subtitle {
+      font-size: 32px;
+      font-weight: bold;
+      color: #001f3f;
+      margin-bottom: 30px;
+    }
+    .continue-button {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      background: none;
+      border: 2px solid white;
+      color: white;
+      padding: 10px 20px;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 16px;
+    }
+    .continue-button:hover {
+      background: rgba(255,255,255,0.1);
+    }
+  </style>
+</head>
+<body>
+  <h1>Workstation Incobel</h1>
+  <div class="container">
+    <div class="subtitle">SONHO</div>
+    <button class="continue-button" onclick="continuar()">
+      Continuar &#9654;
+    </button>
+  </div>
+
+  <script>
+    function continuar() {
+      window.location.href = \"pagina3.html\";
+    }
+  </script>
+</body>
+</html>

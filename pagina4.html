@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang=\"pt-br\">
+<head>
+  <meta charset=\"UTF-8\" />
+  <meta name=\"viewport\" content=\"width=device-width, initial-scale=1.0\" />
+  <title>Viagens</title>
+  <style>
+    body {
+      margin: 0;
+      font-family: Arial, sans-serif;
+      background-color: #001f3f;
+      color: white;
+      padding: 20px;
+    }
+    .header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+    .back-button {
+      background: none;
+      border: none;
+      color: white;
+      font-size: 24px;
+      cursor: pointer;
+    }
+    .indicator {
+      background: white;
+      color: #001f3f;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+    }
+  </style>
+</head>
+<body>
+  <div class=\"header\">
+    <h1>Incobel</h1>
+    <button class=\"back-button\" onclick=\"voltar()\">&#9664;</button>
+  </div>
+  <h2>Workstation Incobel</h2>
+
+  <div class=\"indicator\">Quantidade de Viagens</div>
+  <div class=\"indicator\">Média por Litro</div>
+  <div class=\"indicator\">Km Rodado</div>
+  <div class=\"indicator\">Volume Hecto</div>
+
+  <script>
+    function voltar() {
+      window.location.href = \"pagina3.html\";
+    }
+  </script>
+</body>
+</html>
