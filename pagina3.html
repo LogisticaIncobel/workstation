@@ -15,8 +15,8 @@
     }
     .header {
       display: flex;
-      justify-content: space-between;
       align-items: center;
+      gap: 10px;
     }
     .back-button {
       background: none;
@@ -25,32 +25,40 @@
       font-size: 24px;
       cursor: pointer;
     }
-    .menu-buttons {
-      margin-top: 40px;
+    .title {
+      font-size: 24px;
+    }
+    h2 {
+      margin-top: 20px;
+    }
+    .menu-grid {
+      margin-top: 30px;
       display: grid;
       grid-template-columns: repeat(2, 1fr);
-      gap: 15px;
+      gap: 20px;
     }
-    .menu-buttons button {
+    .menu-grid button {
       background-color: white;
       color: #001f3f;
       border: none;
-      padding: 15px;
+      padding: 30px;
       font-size: 16px;
       border-radius: 8px;
       cursor: pointer;
+      font-weight: bold;
     }
   </style>
 </head>
 <body>
   <div class="header">
-    <h1>Incobel</h1>
     <button class="back-button" onclick="voltar()">&#9664;</button>
+    <div class="title">Incobel</div>
   </div>
+
   <h2>Workstation Incobel</h2>
   <h3>Bem vindo Motorista!</h3>
 
-  <div class="menu-buttons">
+  <div class="menu-grid">
     <button onclick="location.href='pagina4.html'">Viagens</button>
     <button onclick="location.href='pagina5.html'">Check List</button>
     <button onclick="location.href='pagina7.html'">Frota</button>
@@ -61,7 +69,7 @@
 
   <script>
     function voltar() {
-      window.location.href = \"pagina2.html\";
+      window.location.href = "pagina2.html";
     }
   </script>
 </body>
