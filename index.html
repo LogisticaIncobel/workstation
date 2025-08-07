@@ -44,7 +44,7 @@
   <script>
     async function acessar() {
       const entrada = document.getElementById('cpf').value;
-      const cpfDigitado = entrada.replace(/\D/g, ''); // limpa tudo que não é número
+      const cpfDigitado = entrada.replace(/\D/g, ''); // tira tudo que não é número
 
       if (cpfDigitado.length !== 11) {
         alert("CPF inválido. Deve conter 11 dígitos.");
@@ -53,31 +53,35 @@
 
       try {
         const response = await fetch("https://logisticaincobel.github.io/workstation/dados.csv");
-        const data = await response.text();
-        const linhas = data.split("\n");
+        const csv = await response.text();
+        const linhas = csv.split(/\r?\n/);
 
-        const linhaEncontrada = linhas.find(linha => {
-          const cpfArquivo = linha.split(",")[0].replace(/\D/g, ''); // também limpa o CSV
-          return cpfArquivo === cpfDigitado;
-        });
+        let encontrado = false;
 
-        if (!linhaEncontrada) {
-          alert("CPF não encontrado.");
-          return;
+        for (const linha of linhas) {
+          const partes = linha.split(",");
+          const cpfArquivo = partes[0]?.replace(/\D/g, ''); // também limpa o CPF do CSV
+
+          if (cpfArquivo === cpfDigitado) {
+            const nome = partes[1]?.trim() || "Usuário";
+            const cargo = partes[2]?.trim() || "Cargo";
+
+            sessionStorage.setItem("cpf", cpfDigitado);
+            sessionStorage.setItem("nome", nome);
+            sessionStorage.setItem("cargo", cargo);
+
+            window.location.href = "painel.html";
+            encontrado = true;
+            break;
+          }
         }
 
-        const partes = linhaEncontrada.split(",");
-        const nome = partes[1]?.trim() || "Usuário";
-        const cargo = partes[2]?.trim() || "Cargo";
-
-        sessionStorage.setItem("cpf", cpfDigitado);
-        sessionStorage.setItem("nome", nome);
-        sessionStorage.setItem("cargo", cargo);
-
-        window.location.href = "painel.html";
-      } catch (error) {
-        alert("Erro ao acessar os dados.");
-        console.error(error);
+        if (!encontrado) {
+          alert("CPF não encontrado na base.");
+        }
+      } catch (e) {
+        alert("Erro ao carregar os dados.");
+        console.error(e);
       }
     }
   </script>
