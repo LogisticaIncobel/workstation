@@ -1,84 +1,94 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-  <meta charset="UTF-8">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Painel Individual Incobel</title>
   <style>
     body {
-      background: linear-gradient(to bottom, #000000, #000d1a);
-      color: #ccc;
+      margin: 0;
+      background: linear-gradient(to bottom, #001f3f, #000000);
+      color: white;
       font-family: Arial, sans-serif;
       text-align: center;
-      padding-top: 100px;
+      padding: 2rem;
     }
     h1 {
-      font-size: 28px;
-      color: #ccc;
+      font-size: 1.8rem;
+      margin-bottom: 1rem;
     }
     input {
-      padding: 10px;
-      font-size: 18px;
-      width: 250px;
+      padding: 0.6rem;
+      font-size: 1rem;
       border-radius: 5px;
       border: none;
-      margin-top: 20px;
+      width: 250px;
       text-align: center;
     }
     button {
-      padding: 10px 20px;
-      font-size: 18px;
-      margin-top: 20px;
-      cursor: pointer;
-      border-radius: 5px;
+      margin-top: 1rem;
+      padding: 0.6rem 2rem;
+      font-size: 1rem;
       border: none;
+      border-radius: 5px;
       background-color: #004080;
       color: white;
+      cursor: pointer;
+    }
+    iframe {
+      margin-top: 2rem;
+      width: 100%;
+      height: 85vh;
+      border: none;
+      display: none;
     }
   </style>
 </head>
 <body>
   <h1>Painel Individual Incobel</h1>
   <p>Digite seu CPF (com pontos e hífen):</p>
-  <input id="cpf" placeholder="000.000.000-00" />
-  <br>
-  <button onclick="entrar()">Entrar</button>
+  <input type="text" id="cpfInput" placeholder="000.000.000-00" maxlength="14"/>
+  <br />
+  <button onclick="acessarPainel()">Entrar</button>
+
+  <iframe id="painelIframe" allowfullscreen="true"></iframe>
 
   <script>
-    async function entrar() {
-      const cpf = document.getElementById("cpf").value.trim();
+    const cpfsPermitidos = [
+      "011.938.299-76",
+      "020.586.869-00",
+      "005.275.259-36",
+      "005.159.019-03",
+      "418.560.820-91",
+      "770.495.359-15",
+      "078.861.819-99",
+      "048.381.969-70",
+      "076.397.099-97",
+      "386.597.609-30"
+    ];
 
-      const regex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
-      if (!regex.test(cpf)) {
+    function acessarPainel() {
+      const cpf = document.getElementById("cpfInput").value.trim();
+      const cpfRegex = /^\d{3}\.\d{3}\.\d{3}-\d{2}$/;
+
+      if (!cpfRegex.test(cpf)) {
         alert("CPF inválido. Use o formato 000.000.000-00");
         return;
       }
 
-      try {
-        const resposta = await fetch("dados.csv");
-        const texto = await resposta.text();
-        const linhas = texto.split("\n").slice(1);
-
-        let cpfEncontrado = false;
-        for (let linha of linhas) {
-          const [cpfArquivo] = linha.split(",");
-          if (cpfArquivo.trim() === cpf) {
-            cpfEncontrado = true;
-            break;
-          }
-        }
-
-        if (!cpfEncontrado) {
-          alert("CPF não encontrado.");
-          return;
-        }
-
-        // ⚠️ Aqui foi corrigido: "Planilha1" é o nome exato da tabela
-        const url = `https://app.powerbi.com/reportEmbed?reportId=d3943548-d36d-405a-b692-bb60587e736e&autoAuth=true&ctid=659822cf-7349-4e98-98ce-a7f29833b5c6&filter=Planilha1/CPF eq '${cpf}'&mobile=true`;
-        window.location.href = url;
-      } catch (erro) {
-        alert("Erro ao carregar os dados.");
-        console.error(erro);
+      if (!cpfsPermitidos.includes(cpf)) {
+        alert("CPF não autorizado.");
+        return;
       }
+
+      const reportURL = "https://app.powerbi.com/view?r=eyJrIjoiOTRkMzViNWYtNzE3Yi00NWIyLThmNzYtMmUzYzRjODFhY2UwIiwidCI6IjY1OTgyMmNmLTczNDktNGU5OC05OGNlLWE3ZjI5ODMzYjVjNiJ9";
+
+      const filtro = encodeURIComponent(`{"$filter":"Planilha1/CPF eq '${cpf}'"}`);
+      const urlComFiltro = `${reportURL}&filter=${filtro}&pageName=ReportSection4`;
+
+      const iframe = document.getElementById("painelIframe");
+      iframe.src = urlComFiltro;
+      iframe.style.display = "block";
     }
   </script>
 </body>
