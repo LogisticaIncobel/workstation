@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
                 if (cpfEncontrado) {
                     const filtro = encodeURIComponent(`CPF eq '${cpf}'`);
-                    const url = `https://app.powerbi.com/reportEmbed?reportId=d3943548-d36d-405a-b692-bb60587e736e&autoAuth=true&ctid=659822cf-7349-4e98-98ce-a7f29833b5c6&filter=Tabela/CPF ${filtro}&mobile=true`;
+                    const url = `https://app.powerbi.com/reportEmbed?reportId=d3943548-d36d-405a-b692-bb60587e736e&autoAuth=true&ctid=659822cf-7349-4e98-98ce-a7f29833b5c6&filter=Planilha1/CPF ${filtro}&mobile=true`;
                     window.location.href = url;
                 } else {
                     alert('CPF não encontrado na base de dados.');
@@ -35,3 +35,4 @@ document.addEventListener('DOMContentLoaded', function () {
             });
     });
 });
+
