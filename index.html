@@ -14,7 +14,7 @@
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,var(--bg1), var(--bg2) 60%, var(--bg3));
        font:15px/1.45 system-ui,Segoe UI,Roboto,Arial;color:var(--text)}
-  .wrap{max-width:420px;margin:0 auto;padding:14px}
+  .wrap{max-width:460px;margin:0 auto;padding:14px}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
   .topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px}
   .logo{display:flex;gap:10px;align-items:center}
@@ -43,6 +43,10 @@
   .kpi.big{grid-column:1/-1}
   .kpi .value{font-size:26px;font-weight:900}
   .kpi .label{font-size:12px;color:#d5e6ff}
+  .factories{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .factory{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .factory .name{font-size:12px;color:#d5e6ff;margin-bottom:4px}
+  .factory .count{font-size:22px;font-weight:900}
   .hidden{display:none}
   .footer{color:#cfe3ff80;font-size:12px;text-align:center;margin:10px 0}
   .loader{display:none;gap:8px;align-items:center;font-size:13px;color:#d5e6ff}
@@ -71,7 +75,7 @@
             <button id="btn-enter" type="button">Entrar</button>
           </div>
         </div>
-        <div class="hint">O CSV deve estar no mesmo diretório: <b>dados.csv</b> (separador <b>;</b>, UTF-8).</div>
+        <div class="hint">Coloque o CSV no mesmo diretório: <b>dados.csv</b> (separador <b>;</b>, UTF-8).</div>
       </div>
     </div>
 
@@ -106,13 +110,15 @@
       <div class="section">
         <div class="content">
           <div class="kpis">
-            <div class="kpi big"><div class="label">Total de Viagens</div><div id="kpi-total" class="value">0</div></div>
-            <div class="kpi"><div class="label">Viamão/RS</div><div id="kpi-viamao" class="value">0</div></div>
-            <div class="kpi"><div class="label">Curitiba/PR</div><div id="kpi-curitiba" class="value">0</div></div>
-            <div class="kpi"><div class="label">Ponta Grossa/PR (Fábrica)</div><div id="kpi-pg" class="value">0</div></div>
-            <div class="kpi"><div class="label">Lages/SC (Revenda)</div><div id="kpi-lages" class="value">0</div></div>
-            <div class="kpi"><div class="label">Sapucaia/RS (Fábrica)</div><div id="kpi-sapucaia" class="value">0</div></div>
+            <div class="kpi big"><div class="label">Total de Viagens (dias únicos)</div><div id="kpi-total" class="value">0</div></div>
           </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <h3>Fábricas (1 viagem por dia)</h3>
+        <div class="content">
+          <div id="factories" class="factories"></div>
         </div>
       </div>
 
@@ -122,7 +128,7 @@
 
 <script>
 /* ===================== CONFIG ===================== */
-const CSV_URL = "dados.csv"; // relativo ao index.html (mesmo diretório)
+const CSV_URL = "dados.csv"; // relativo ao index.html
 
 /* ===================== ESTADO ===================== */
 let allRows = [];
@@ -132,7 +138,6 @@ let monthActive = null;   // 0..11 ou null (todos)
 let revendaFilter = 'ALL';
 
 /* ===================== UTIL ===================== */
-// máscara de CPF
 const maskCPF = (el)=>{
   let v = el.value.replace(/\D/g,'').slice(0,11);
   if (v.length>9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*$/,'$1.$2.$3-$4');
@@ -142,18 +147,17 @@ const maskCPF = (el)=>{
 };
 const isCPF = v => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(v);
 
-// serial Excel -> Date local
-function excelSerialToDate(n){
-  const base = new Date(Date.UTC(1899,11,30));
-  const d = new Date(base.getTime() + (Number(n)*86400000));
-  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+// Excel serial -> UTC y,m,d (evita bug de fuso horário)
+function excelSerialToUTCParts(n){
+  const ms = Date.UTC(1899,11,30) + (Number(n)*86400000);
+  const d = new Date(ms);
+  return { y:d.getUTCFullYear(), m:d.getUTCMonth(), d:d.getUTCDate() };
 }
+const pad2 = n => String(n).padStart(2,'0');
 const monthName = i => ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][i];
+const dayKeyUTC = p => `${p.y}-${pad2(p.m+1)}-${pad2(p.d)}`;
 
-// chave de dia (YYYY-MM-DD)
-const dayKey = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')+"-"+String(d.getDate()).padStart(2,'0');
-
-// parser CSV ; (com aspas)
+/* ===================== CSV ===================== */
 function parseCSV(text){
   text = text.replace(/^\uFEFF/,''); // BOM
   const out = []; let row=[], cell='', inQ=false;
@@ -167,13 +171,17 @@ function parseCSV(text){
   const headers=out.shift().map(s=>s.trim());
   return out.filter(r=>r.length&&r.some(x=>String(x).trim()!=='')).map(cols=>{
     const obj={}; headers.forEach((h,i)=>obj[h]=(cols[i]??'').trim());
-    const dt=excelSerialToDate(obj['DATA']); obj._date=dt; obj._mes=dt.getMonth();
-    obj._dayKey = dayKey(dt);
+    // Só considera linhas com DATA válida numérica
+    const n = Number(obj['DATA']);
+    if (!isFinite(n)) return null;
+    const p = excelSerialToUTCParts(n);
+    obj._utc = p;
+    obj._mes = p.m; // 0..11 (UTC)
+    obj._dayKey = dayKeyUTC(p);
     return obj;
-  });
+  }).filter(Boolean);
 }
 
-/* ===================== DATA ===================== */
 async function loadCSV(){
   const loader = document.getElementById('loader'); loader.style.display='flex';
   try{
@@ -187,7 +195,7 @@ async function loadCSV(){
   }finally{ loader.style.display='none'; }
 }
 
-/* ===================== LÓGICA DE CONTAGEM (1 viagem por dia) ===================== */
+/* ===================== FILTROS & CONTAGENS ===================== */
 function applyFilters(){
   let rows = allRows.filter(r=>r['CPF']===loggedCPF);
   if(monthActive!==null) rows = rows.filter(r=>r._mes===monthActive);
@@ -195,16 +203,23 @@ function applyFilters(){
   return rows;
 }
 
-// conta dias únicos no subconjunto (1 viagem por dia)
-function countUniqueDays(rows){ return new Set(rows.map(r=>r._dayKey)).size; }
-
-// conta dias únicos para uma DIMENSÃO específica (FÁBRICA ou REVENDA) com valor X
-function countUniqueDaysBy(rows, field, value){
-  const set = new Set();
-  rows.forEach(r=>{
-    if(r[field]===value){ set.add(r._dayKey + '|' + value); }
-  });
+// 1 viagem por dia (dias únicos) — total
+function countUniqueDays(rows){
+  const set = new Set(rows.map(r=>r._dayKey));
   return set.size;
+}
+
+// 1 viagem por dia E por fábrica — monta mapa {fabrica -> count}
+function countPerFactoryUniqueDay(rows){
+  const map = new Map(); // fabrica -> Set(dayKey)
+  rows.forEach(r=>{
+    const f = r['FÁBRICA'];
+    if (!f) return;
+    let set = map.get(f); if(!set){ set = new Set(); map.set(f,set); }
+    set.add(r._dayKey);
+  });
+  // transforma em array ordenado por count desc
+  return Array.from(map.entries()).map(([name,set])=>({name, count:set.size})).sort((a,b)=>b.count-a.count);
 }
 
 /* ===================== UI ===================== */
@@ -225,20 +240,22 @@ function buildMonthChips(rowsCPF){
   }
 }
 
+function renderFactories(list){
+  const cont = document.getElementById('factories');
+  cont.innerHTML = '';
+  list.forEach(item=>{
+    const card = document.createElement('div');
+    card.className = 'factory';
+    card.innerHTML = `<div class="name">${item.name}</div><div class="count">${item.count}</div>`;
+    cont.appendChild(card);
+  });
+}
+
 function renderKPIs(){
   const rows = applyFilters();
-
-  // TOTAL = dias únicos dentro do filtro
   document.getElementById('kpi-total').textContent = countUniqueDays(rows);
-
-  // REVENDA (dias únicos por revenda)
-  document.getElementById('kpi-viamao').textContent   = countUniqueDaysBy(rows,'REVENDA','Viamão/RS');
-  document.getElementById('kpi-curitiba').textContent = countUniqueDaysBy(rows,'REVENDA','Curitiba/PR');
-  document.getElementById('kpi-lages').textContent    = countUniqueDaysBy(rows,'REVENDA','Lages/SC');
-
-  // FÁBRICA (dias únicos por fábrica)
-  document.getElementById('kpi-pg').textContent       = countUniqueDaysBy(rows,'FÁBRICA','AMBEV - PONTA GROSSA');
-  document.getElementById('kpi-sapucaia').textContent = countUniqueDaysBy(rows,'FÁBRICA','AMBEV - SAPUCAIA');
+  const perFactory = countPerFactoryUniqueDay(rows);
+  renderFactories(perFactory);
 }
 
 async function doLogin(){
@@ -275,9 +292,6 @@ document.getElementById('btn-enter').addEventListener('click', doLogin);
 document.querySelectorAll('input[name="rev"]').forEach(radio=>{
   radio.addEventListener('change', ()=>{ revendaFilter = document.querySelector('input[name="rev"]:checked').value; renderKPIs(); });
 });
-
-// footer badge
-const footer = document.createElement('span'); footer.id='cpf-badge'; document.body.appendChild(footer);
 
 // auto fill CPF salvo
 (function init(){ try{ const saved=localStorage.getItem('ws_cpf'); if(saved) document.getElementById('cpf').value=saved; }catch(e){} })();
