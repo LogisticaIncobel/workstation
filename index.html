@@ -47,6 +47,7 @@
   .factory{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
   .factory .name{font-size:12px;color:#d5e6ff;margin-bottom:4px}
   .factory .count{font-size:22px;font-weight:900}
+  .debug{margin-top:8px;font-size:12px;color:#cfe3ff99}
   .hidden{display:none}
   .footer{color:#cfe3ff80;font-size:12px;text-align:center;margin:10px 0}
   .loader{display:none;gap:8px;align-items:center;font-size:13px;color:#d5e6ff}
@@ -75,7 +76,7 @@
             <button id="btn-enter" type="button">Entrar</button>
           </div>
         </div>
-        <div class="hint">Coloque o CSV no mesmo diretório: <b>dados.csv</b> (separador <b>;</b>, UTF-8).</div>
+        <div class="hint">Coloque <b>dados.csv</b> no mesmo diretório (separador <b>;</b>, UTF-8).</div>
       </div>
     </div>
 
@@ -110,13 +111,14 @@
       <div class="section">
         <div class="content">
           <div class="kpis">
-            <div class="kpi big"><div class="label">Total de Viagens (dias únicos)</div><div id="kpi-total" class="value">0</div></div>
+            <div class="kpi big"><div class="label">Total de Viagens (dias únicos por fábrica)</div><div id="kpi-total" class="value">0</div></div>
           </div>
+          <div class="debug" id="dbg"></div>
         </div>
       </div>
 
       <div class="section">
-        <h3>Fábricas (1 viagem por dia)</h3>
+        <h3>Fábricas (1 viagem por dia/fábrica)</h3>
         <div class="content">
           <div id="factories" class="factories"></div>
         </div>
@@ -128,13 +130,13 @@
 
 <script>
 /* ===================== CONFIG ===================== */
-const CSV_URL = "dados.csv"; // relativo ao index.html
+const CSV_URL = "dados.csv";
 
 /* ===================== ESTADO ===================== */
 let allRows = [];
 let loaded = false;
 let loggedCPF = null;
-let monthActive = null;   // 0..11 ou null (todos)
+let monthActive = null;   // 0..11 ou null
 let revendaFilter = 'ALL';
 
 /* ===================== UTIL ===================== */
@@ -147,7 +149,7 @@ const maskCPF = (el)=>{
 };
 const isCPF = v => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(v);
 
-// Excel serial -> UTC y,m,d (evita bug de fuso horário)
+// Excel serial -> UTC parts
 function excelSerialToUTCParts(n){
   const ms = Date.UTC(1899,11,30) + (Number(n)*86400000);
   const d = new Date(ms);
@@ -171,13 +173,16 @@ function parseCSV(text){
   const headers=out.shift().map(s=>s.trim());
   return out.filter(r=>r.length&&r.some(x=>String(x).trim()!=='')).map(cols=>{
     const obj={}; headers.forEach((h,i)=>obj[h]=(cols[i]??'').trim());
-    // Só considera linhas com DATA válida numérica
     const n = Number(obj['DATA']);
     if (!isFinite(n)) return null;
     const p = excelSerialToUTCParts(n);
     obj._utc = p;
-    obj._mes = p.m; // 0..11 (UTC)
+    obj._mes = p.m; // 0..11
     obj._dayKey = dayKeyUTC(p);
+    // normalização de textos (evita espaços quebrando filtros)
+    obj['FÁBRICA'] = (obj['FÁBRICA']||'').replace(/\s+/g,' ').trim();
+    obj['REVENDA'] = (obj['REVENDA']||'').replace(/\s+/g,' ').trim();
+    obj['CPF']     = (obj['CPF']||'').trim();
     return obj;
   }).filter(Boolean);
 }
@@ -203,26 +208,44 @@ function applyFilters(){
   return rows;
 }
 
-// 1 viagem por dia (dias únicos) — total
-function countUniqueDays(rows){
-  const set = new Set(rows.map(r=>r._dayKey));
-  return set.size;
-}
-
-// 1 viagem por dia E por fábrica — monta mapa {fabrica -> count}
-function countPerFactoryUniqueDay(rows){
+// 1 viagem por dia/fábrica
+function perFactoryUniqueDays(rows){
   const map = new Map(); // fabrica -> Set(dayKey)
   rows.forEach(r=>{
-    const f = r['FÁBRICA'];
-    if (!f) return;
-    let set = map.get(f); if(!set){ set = new Set(); map.set(f,set); }
+    const fab = r['FÁBRICA'];
+    if(!fab) return;
+    let set = map.get(fab);
+    if(!set){ set = new Set(); map.set(fab, set); }
     set.add(r._dayKey);
   });
-  // transforma em array ordenado por count desc
-  return Array.from(map.entries()).map(([name,set])=>({name, count:set.size})).sort((a,b)=>b.count-a.count);
+  const list = Array.from(map.entries()).map(([name,set])=>({name, count:set.size}));
+  list.sort((a,b)=> b.count-a.count || a.name.localeCompare(b.name));
+  return list;
 }
 
-/* ===================== UI ===================== */
+function renderKPIs(){
+  const rows = applyFilters();
+  const list = perFactoryUniqueDays(rows);
+
+  // TOTAL = soma dos dias únicos por fábrica (para bater com sua expectativa)
+  const total = list.reduce((s,it)=>s+it.count,0);
+  document.getElementById('kpi-total').textContent = total;
+
+  // Debug opcional: também mostra dias únicos gerais (sem duplicar por fábrica)
+  const uniqDaysOverall = new Set(rows.map(r=>r._dayKey)).size;
+  document.getElementById('dbg').textContent = `Dias únicos totais (sem duplicar por fábrica): ${uniqDaysOverall}`;
+
+  // Render fábricas
+  const cont = document.getElementById('factories');
+  cont.innerHTML='';
+  list.forEach(it=>{
+    const card=document.createElement('div');
+    card.className='factory';
+    card.innerHTML=`<div class="name">${it.name}</div><div class="count">${it.count}</div>`;
+    cont.appendChild(card);
+  });
+}
+
 function buildMonthChips(rowsCPF){
   const cont = document.getElementById('month-chips'); cont.innerHTML='';
   const monthsWithData = new Set(rowsCPF.map(r=>r._mes));
@@ -240,24 +263,6 @@ function buildMonthChips(rowsCPF){
   }
 }
 
-function renderFactories(list){
-  const cont = document.getElementById('factories');
-  cont.innerHTML = '';
-  list.forEach(item=>{
-    const card = document.createElement('div');
-    card.className = 'factory';
-    card.innerHTML = `<div class="name">${item.name}</div><div class="count">${item.count}</div>`;
-    cont.appendChild(card);
-  });
-}
-
-function renderKPIs(){
-  const rows = applyFilters();
-  document.getElementById('kpi-total').textContent = countUniqueDays(rows);
-  const perFactory = countPerFactoryUniqueDay(rows);
-  renderFactories(perFactory);
-}
-
 async function doLogin(){
   const msg = document.getElementById('login-msg');
   const cpf = document.getElementById('cpf').value.trim();
@@ -270,13 +275,13 @@ async function doLogin(){
   loggedCPF = cpf; try{ localStorage.setItem('ws_cpf', cpf);}catch(e){}
   msg.className='success'; msg.textContent='Acesso confirmado. Carregando painel…';
 
-  const driver = (rowsCPF[0]['MOTORISTA']||'').trim() || 'Motorista';
+  const driver = (rowsCPF[0]['MOTORISTA']||'').replace(/\s+/g,' ').trim() || 'Motorista';
   document.getElementById('driver').value = driver;
   document.getElementById('user-name').textContent = driver;
   document.getElementById('cpf-badge').textContent = cpf;
 
   buildMonthChips(rowsCPF);
-  monthActive = null;
+  monthActive = null; // todos
   revendaFilter = 'ALL';
   document.querySelectorAll('input[name="rev"]').forEach(r=> r.checked=(r.value==='ALL'));
 
