@@ -9,7 +9,7 @@
     --brand:#044b8a; --bg1:#052142; --bg2:#083563; --bg3:#0a3e76;
     --panel:rgba(255,255,255,.06); --line:rgba(255,255,255,.18);
     --text:#f2f6fb; --muted:#c7d6ea; --chip:#0d4f93; --chip-on:#0e6bd1;
-    --ok:#16a34a; --danger:#ef4444; --radius:14px; --shadow:0 12px 28px rgba(0,0,0,.35);
+    --radius:14px; --shadow:0 12px 28px rgba(0,0,0,.35);
   }
   *{box-sizing:border-box}
   body{margin:0;background:linear-gradient(180deg,var(--bg1), var(--bg2) 60%, var(--bg3));
@@ -97,8 +97,8 @@
         <div class="content">
           <div class="radios">
             <label class="radio"><input type="radio" name="rev" value="ALL" checked> <span>Todas</span></label>
-            <label class="radio"><input type="radio" name="rev" value="Lages/SC"> <span>LGS</span></label>
-            <label class="radio"><input type="radio" name="rev" value="Rio do Sul/SC"> <span>RDS</span></label>
+            <label class="radio"><input type="radio" name="rev" value="Lages/SC"> <span>Lages/SC</span></label>
+            <label class="radio"><input type="radio" name="rev" value="Rio do Sul/SC"> <span>Rio do Sul/SC</span></label>
           </div>
         </div>
       </div>
@@ -109,9 +109,9 @@
             <div class="kpi big"><div class="label">Total de Viagens</div><div id="kpi-total" class="value">0</div></div>
             <div class="kpi"><div class="label">Viamão/RS</div><div id="kpi-viamao" class="value">0</div></div>
             <div class="kpi"><div class="label">Curitiba/PR</div><div id="kpi-curitiba" class="value">0</div></div>
-            <div class="kpi"><div class="label">Ponta Grossa/PR</div><div id="kpi-pg" class="value">0</div></div>
-            <div class="kpi"><div class="label">Lages/SC</div><div id="kpi-lages" class="value">0</div></div>
-            <div class="kpi"><div class="label">Sapucaia/RS</div><div id="kpi-sapucaia" class="value">0</div></div>
+            <div class="kpi"><div class="label">Ponta Grossa/PR (Fábrica)</div><div id="kpi-pg" class="value">0</div></div>
+            <div class="kpi"><div class="label">Lages/SC (Revenda)</div><div id="kpi-lages" class="value">0</div></div>
+            <div class="kpi"><div class="label">Sapucaia/RS (Fábrica)</div><div id="kpi-sapucaia" class="value">0</div></div>
           </div>
         </div>
       </div>
@@ -122,10 +122,10 @@
 
 <script>
 /* ===================== CONFIG ===================== */
-const CSV_URL = "dados.csv"; // relativo ao index.html (recomendado hospedar juntos)
+const CSV_URL = "dados.csv"; // relativo ao index.html (mesmo diretório)
 
 /* ===================== ESTADO ===================== */
-let allRows = [];         // todas as linhas do CSV
+let allRows = [];
 let loaded = false;
 let loggedCPF = null;
 let monthActive = null;   // 0..11 ou null (todos)
@@ -142,145 +142,129 @@ const maskCPF = (el)=>{
 };
 const isCPF = v => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(v);
 
-// converte serial Excel (dias desde 1899-12-30) para Date local (00:00)
+// serial Excel -> Date local
 function excelSerialToDate(n){
-  const base = new Date(Date.UTC(1899,11,30)); // 1899-12-30
+  const base = new Date(Date.UTC(1899,11,30));
   const d = new Date(base.getTime() + (Number(n)*86400000));
   return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
 }
 const monthName = i => ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][i];
 
-// CSV parser robusto (separador ';', suporta aspas)
-function parseCSV(text){
-  text = text.replace(/^\uFEFF/,''); // remove BOM
-  const out = [];
-  let row = [], cell = '', inQ = false;
-  const pushCell = () => { row.push(cell); cell=''; };
-  const pushRow = () => { out.push(row); row=[]; };
-  for (let i=0;i<text.length;i++){
-    const c = text[i], n = text[i+1];
-    if (inQ){
-      if (c === '"' && n === '"'){ cell+='"'; i++; }
-      else if (c === '"'){ inQ=false; }
-      else { cell+=c; }
-    } else {
-      if (c === '"'){ inQ=true; }
-      else if (c === ';'){ pushCell(); }
-      else if (c === '\n'){ pushCell(); pushRow(); }
-      else if (c === '\r'){ /* ignora */ }
-      else { cell+=c; }
-    }
-  }
-  if (cell.length || row.length){ pushCell(); pushRow(); }
+// chave de dia (YYYY-MM-DD)
+const dayKey = d => d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,'0')+"-"+String(d.getDate()).padStart(2,'0');
 
-  const headers = out.shift().map(s=>s.trim());
-  return out.filter(r=>r.length && r.some(x=>String(x).trim()!=='')).map(cols=>{
-    const obj = {};
-    headers.forEach((h,i)=> obj[h] = (cols[i]??'').trim());
-    // derivados
-    const dt = excelSerialToDate(obj['DATA']);
-    obj._date = dt;
-    obj._mes = dt.getMonth();
+// parser CSV ; (com aspas)
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/,''); // BOM
+  const out = []; let row=[], cell='', inQ=false;
+  const pushCell=()=>{row.push(cell);cell='';}; const pushRow=()=>{out.push(row);row=[];};
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(inQ){ if(c=='"'&&n=='"'){cell+='"';i++;} else if(c=='"'){inQ=false;} else{cell+=c;} }
+    else { if(c=='"'){inQ=true;} else if(c==';'){pushCell();} else if(c=='\n'){pushCell();pushRow();} else if(c=='\r'){} else{cell+=c;} }
+  }
+  if(cell.length||row.length){pushCell();pushRow();}
+  const headers=out.shift().map(s=>s.trim());
+  return out.filter(r=>r.length&&r.some(x=>String(x).trim()!=='')).map(cols=>{
+    const obj={}; headers.forEach((h,i)=>obj[h]=(cols[i]??'').trim());
+    const dt=excelSerialToDate(obj['DATA']); obj._date=dt; obj._mes=dt.getMonth();
+    obj._dayKey = dayKey(dt);
     return obj;
   });
 }
 
 /* ===================== DATA ===================== */
 async function loadCSV(){
-  const loader = document.getElementById('loader');
-  loader.style.display = 'flex';
+  const loader = document.getElementById('loader'); loader.style.display='flex';
   try{
-    const res = await fetch(CSV_URL + "?v=" + Date.now(), {cache:'no-store'});
-    if (!res.ok) throw new Error("Falha ao baixar CSV");
+    const res = await fetch(CSV_URL+"?v="+Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error("Falha ao baixar CSV");
     const txt = await res.text();
     allRows = parseCSV(txt);
     loaded = true;
   }catch(err){
-    document.getElementById('login-msg').className='error';
-    document.getElementById('login-msg').textContent = 'Erro ao carregar dados: ' + err.message;
-  }finally{
-    loader.style.display = 'none';
-  }
+    const m=document.getElementById('login-msg'); m.className='error'; m.textContent='Erro ao carregar dados: '+err.message;
+  }finally{ loader.style.display='none'; }
+}
+
+/* ===================== LÓGICA DE CONTAGEM (1 viagem por dia) ===================== */
+function applyFilters(){
+  let rows = allRows.filter(r=>r['CPF']===loggedCPF);
+  if(monthActive!==null) rows = rows.filter(r=>r._mes===monthActive);
+  if(revendaFilter!=='ALL') rows = rows.filter(r=>r['REVENDA']===revendaFilter);
+  return rows;
+}
+
+// conta dias únicos no subconjunto (1 viagem por dia)
+function countUniqueDays(rows){ return new Set(rows.map(r=>r._dayKey)).size; }
+
+// conta dias únicos para uma DIMENSÃO específica (FÁBRICA ou REVENDA) com valor X
+function countUniqueDaysBy(rows, field, value){
+  const set = new Set();
+  rows.forEach(r=>{
+    if(r[field]===value){ set.add(r._dayKey + '|' + value); }
+  });
+  return set.size;
 }
 
 /* ===================== UI ===================== */
-function buildMonthChips(rows){
-  const cont = document.getElementById('month-chips');
-  cont.innerHTML='';
-  const having = new Set(rows.map(r=>r._mes));
-  for (let m=0;m<12;m++){
-    const div = document.createElement('div');
-    div.className = 'chip' + (having.has(m)? '' : ' disabled');
-    div.textContent = monthName(m);
-    div.dataset.month = m;
-    div.onclick = ()=>{
-      if (!having.has(m)) return;
+function buildMonthChips(rowsCPF){
+  const cont = document.getElementById('month-chips'); cont.innerHTML='';
+  const monthsWithData = new Set(rowsCPF.map(r=>r._mes));
+  for(let m=0;m<12;m++){
+    const div=document.createElement('div');
+    div.className='chip'+(monthsWithData.has(m)?'':' disabled');
+    div.textContent=monthName(m); div.dataset.month=m;
+    div.onclick=()=>{
+      if(!monthsWithData.has(m)) return;
       monthActive = (monthActive===m? null : m);
-      Array.from(cont.children).forEach(ch=>{
-        ch.classList.remove('sel');
-        if (Number(ch.dataset.month)===monthActive) ch.classList.add('sel');
-      });
+      Array.from(cont.children).forEach(ch=>{ ch.classList.remove('sel'); if(Number(ch.dataset.month)===monthActive) ch.classList.add('sel'); });
       renderKPIs();
     };
     cont.appendChild(div);
   }
 }
 
-function applyFilters(){
-  let rows = allRows.filter(r=>r['CPF']===loggedCPF);
-  if (monthActive!==null) rows = rows.filter(r=>r._mes===monthActive);
-  if (revendaFilter!=='ALL') rows = rows.filter(r=>r['REVENDA']===revendaFilter);
-  return rows;
-}
-const countWhere = (rows, field, equals)=> rows.filter(r=>r[field]===equals).length;
-
 function renderKPIs(){
   const rows = applyFilters();
-  document.getElementById('kpi-total').textContent    = rows.length;
-  document.getElementById('kpi-viamao').textContent   = countWhere(rows,'REVENDA','Viamão/RS');
-  document.getElementById('kpi-curitiba').textContent = countWhere(rows,'REVENDA','Curitiba/PR');
-  document.getElementById('kpi-pg').textContent       = countWhere(rows,'FÁBRICA','AMBEV - PONTA GROSSA');
-  document.getElementById('kpi-lages').textContent    = countWhere(rows,'REVENDA','Lages/SC');
-  document.getElementById('kpi-sapucaia').textContent = countWhere(rows,'FÁBRICA','AMBEV - SAPUCAIA');
+
+  // TOTAL = dias únicos dentro do filtro
+  document.getElementById('kpi-total').textContent = countUniqueDays(rows);
+
+  // REVENDA (dias únicos por revenda)
+  document.getElementById('kpi-viamao').textContent   = countUniqueDaysBy(rows,'REVENDA','Viamão/RS');
+  document.getElementById('kpi-curitiba').textContent = countUniqueDaysBy(rows,'REVENDA','Curitiba/PR');
+  document.getElementById('kpi-lages').textContent    = countUniqueDaysBy(rows,'REVENDA','Lages/SC');
+
+  // FÁBRICA (dias únicos por fábrica)
+  document.getElementById('kpi-pg').textContent       = countUniqueDaysBy(rows,'FÁBRICA','AMBEV - PONTA GROSSA');
+  document.getElementById('kpi-sapucaia').textContent = countUniqueDaysBy(rows,'FÁBRICA','AMBEV - SAPUCAIA');
 }
 
 async function doLogin(){
   const msg = document.getElementById('login-msg');
-  const cpfInput = document.getElementById('cpf');
-  const cpf = cpfInput.value.trim();
+  const cpf = document.getElementById('cpf').value.trim();
+  if(!isCPF(cpf)){ msg.className='error'; msg.textContent='CPF inválido. Use 000.000.000-00.'; return; }
+  if(!loaded){ await loadCSV(); if(!loaded) return; }
 
-  if (!isCPF(cpf)){
-    msg.className='error'; msg.textContent='CPF inválido. Use 000.000.000-00.'; return;
-  }
-  if (!loaded){ await loadCSV(); if (!loaded) return; }
+  const rowsCPF = allRows.filter(r=>r['CPF']===cpf);
+  if(!rowsCPF.length){ msg.className='error'; msg.textContent='CPF não encontrado no CSV.'; return; }
 
-  const rows = allRows.filter(r=>r['CPF']===cpf);
-  if (!rows.length){
-    msg.className='error'; msg.textContent='CPF não encontrado no CSV.'; return;
-  }
-
-  // set state
-  loggedCPF = cpf;
-  try{ localStorage.setItem('ws_cpf', cpf);}catch(e){}
+  loggedCPF = cpf; try{ localStorage.setItem('ws_cpf', cpf);}catch(e){}
   msg.className='success'; msg.textContent='Acesso confirmado. Carregando painel…';
 
-  // header + motorista
-  const driver = (rows[0]['MOTORISTA']||'').trim() || 'Motorista';
+  const driver = (rowsCPF[0]['MOTORISTA']||'').trim() || 'Motorista';
   document.getElementById('driver').value = driver;
   document.getElementById('user-name').textContent = driver;
   document.getElementById('cpf-badge').textContent = cpf;
 
-  // month chips (com base no CPF)
-  buildMonthChips(rows);
-  monthActive = null; // todos
-
-  // reset revenda
+  buildMonthChips(rowsCPF);
+  monthActive = null;
   revendaFilter = 'ALL';
-  document.querySelectorAll('input[name="rev"]').forEach(r=> r.checked = (r.value==='ALL'));
+  document.querySelectorAll('input[name="rev"]').forEach(r=> r.checked=(r.value==='ALL'));
 
   renderKPIs();
 
-  // troca de view
   document.getElementById('view-login').classList.add('hidden');
   document.getElementById('view-dash').classList.remove('hidden');
 }
@@ -292,13 +276,11 @@ document.querySelectorAll('input[name="rev"]').forEach(radio=>{
   radio.addEventListener('change', ()=>{ revendaFilter = document.querySelector('input[name="rev"]:checked').value; renderKPIs(); });
 });
 
+// footer badge
+const footer = document.createElement('span'); footer.id='cpf-badge'; document.body.appendChild(footer);
+
 // auto fill CPF salvo
-(function init(){
-  try{
-    const saved = localStorage.getItem('ws_cpf');
-    if (saved) document.getElementById('cpf').value = saved;
-  }catch(e){}
-})();
+(function init(){ try{ const saved=localStorage.getItem('ws_cpf'); if(saved) document.getElementById('cpf').value=saved; }catch(e){} })();
 </script>
 </body>
 </html>
