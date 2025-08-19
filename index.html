@@ -1,0 +1,304 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INCObel • Workstation</title>
+<style>
+  :root{
+    --brand:#044b8a; --bg1:#052142; --bg2:#083563; --bg3:#0a3e76;
+    --panel:rgba(255,255,255,.06); --line:rgba(255,255,255,.18);
+    --text:#f2f6fb; --muted:#c7d6ea; --chip:#0d4f93; --chip-on:#0e6bd1;
+    --ok:#16a34a; --danger:#ef4444; --radius:14px; --shadow:0 12px 28px rgba(0,0,0,.35);
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg1), var(--bg2) 60%, var(--bg3));
+       font:15px/1.45 system-ui,Segoe UI,Roboto,Arial;color:var(--text)}
+  .wrap{max-width:420px;margin:0 auto;padding:14px}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:8px 10px}
+  .logo{display:flex;gap:10px;align-items:center}
+  .drop{width:22px;height:22px;border-radius:50%;background:#7fb6ff;box-shadow:inset 0 -6px 12px rgba(0,0,0,.2)}
+  .title{font-weight:800;letter-spacing:.5px}
+  .section{margin-top:12px}
+  .section h3{margin:0;padding:10px 12px;border-bottom:1px solid var(--line);font-size:13px;letter-spacing:.6px;color:var(--muted)}
+  .content{padding:12px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  label{font-weight:700;font-size:13px}
+  input[type="text"]{width:100%;background:#032243;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;outline:none}
+  input[type="text"]:focus{border-color:#7fb6ff;box-shadow:0 0 0 3px rgba(127,182,255,.25)}
+  button{background:#7fb6ff;color:#08213f;border:none;border-radius:12px;font-weight:800;padding:10px 14px;cursor:pointer}
+  button:hover{filter:brightness(1.05)}
+  .hint{font-size:12px;color:var(--muted)}
+  .error{color:#ffd5d5}.success{color:#bbf7d0}
+  .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .chip{background:var(--chip);border:1px solid var(--line);color:#e8f1ff;padding:8px 10px;border-radius:12px;text-align:center;cursor:pointer;font-weight:700}
+  .chip.disabled{opacity:.4;filter:grayscale(30%);cursor:not-allowed}
+  .chip.sel{outline:2px solid #bfe0ff}
+  .radios{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .radio{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer}
+  .radio input{accent-color:#7fb6ff}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .kpi{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+  .kpi.big{grid-column:1/-1}
+  .kpi .value{font-size:26px;font-weight:900}
+  .kpi .label{font-size:12px;color:#d5e6ff}
+  .hidden{display:none}
+  .footer{color:#cfe3ff80;font-size:12px;text-align:center;margin:10px 0}
+  .loader{display:none;gap:8px;align-items:center;font-size:13px;color:#d5e6ff}
+  .loader .dot{width:6px;height:6px;border-radius:50%;background:#7fb6ff;animation:bl 1s infinite alternate}
+  .loader .dot:nth-child(2){animation-delay:.2s}.loader .dot:nth-child(3){animation-delay:.4s}
+  @keyframes bl{to{transform:translateY(-3px);opacity:.6}}
+</style>
+</head>
+<body>
+  <div class="wrap">
+    <!-- LOGIN -->
+    <div id="view-login" class="card">
+      <div class="topbar">
+        <div class="logo"><div class="drop"></div><div class="title">INCOBEL • WORKSTATION</div></div>
+        <div class="loader" id="loader"><div class="dot"></div><div class="dot"></div><div class="dot"></div> <span>carregando dados…</span></div>
+      </div>
+      <div class="content">
+        <div class="row">
+          <div style="flex:1 1 240px">
+            <label for="cpf">CPF</label>
+            <input type="text" id="cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
+            <div id="login-msg" class="hint">Digite seu CPF e clique em <b>Entrar</b>.</div>
+          </div>
+          <div>
+            <label>&nbsp;</label>
+            <button id="btn-enter" type="button">Entrar</button>
+          </div>
+        </div>
+        <div class="hint">O CSV deve estar no mesmo diretório: <b>dados.csv</b> (separador <b>;</b>, UTF-8).</div>
+      </div>
+    </div>
+
+    <!-- DASH -->
+    <div id="view-dash" class="card hidden">
+      <div class="topbar">
+        <div class="logo"><div class="drop"></div><div class="title">WORKSTATION</div></div>
+        <div class="hint" id="user-name">Motorista</div>
+      </div>
+
+      <div class="section">
+        <h3>Motorista</h3>
+        <div class="content"><input type="text" id="driver" disabled></div>
+      </div>
+
+      <div class="section">
+        <h3>Mês</h3>
+        <div class="content"><div class="chips" id="month-chips"></div></div>
+      </div>
+
+      <div class="section">
+        <h3>Revenda</h3>
+        <div class="content">
+          <div class="radios">
+            <label class="radio"><input type="radio" name="rev" value="ALL" checked> <span>Todas</span></label>
+            <label class="radio"><input type="radio" name="rev" value="Lages/SC"> <span>LGS</span></label>
+            <label class="radio"><input type="radio" name="rev" value="Rio do Sul/SC"> <span>RDS</span></label>
+          </div>
+        </div>
+      </div>
+
+      <div class="section">
+        <div class="content">
+          <div class="kpis">
+            <div class="kpi big"><div class="label">Total de Viagens</div><div id="kpi-total" class="value">0</div></div>
+            <div class="kpi"><div class="label">Viamão/RS</div><div id="kpi-viamao" class="value">0</div></div>
+            <div class="kpi"><div class="label">Curitiba/PR</div><div id="kpi-curitiba" class="value">0</div></div>
+            <div class="kpi"><div class="label">Ponta Grossa/PR</div><div id="kpi-pg" class="value">0</div></div>
+            <div class="kpi"><div class="label">Lages/SC</div><div id="kpi-lages" class="value">0</div></div>
+            <div class="kpi"><div class="label">Sapucaia/RS</div><div id="kpi-sapucaia" class="value">0</div></div>
+          </div>
+        </div>
+      </div>
+
+      <div class="footer">Dados filtrados por CPF • <span id="cpf-badge"></span></div>
+    </div>
+  </div>
+
+<script>
+/* ===================== CONFIG ===================== */
+const CSV_URL = "dados.csv"; // relativo ao index.html (recomendado hospedar juntos)
+
+/* ===================== ESTADO ===================== */
+let allRows = [];         // todas as linhas do CSV
+let loaded = false;
+let loggedCPF = null;
+let monthActive = null;   // 0..11 ou null (todos)
+let revendaFilter = 'ALL';
+
+/* ===================== UTIL ===================== */
+// máscara de CPF
+const maskCPF = (el)=>{
+  let v = el.value.replace(/\D/g,'').slice(0,11);
+  if (v.length>9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*$/,'$1.$2.$3-$4');
+  else if (v.length>6) v = v.replace(/^(\d{3})(\d{3})(\d{0,3}).*$/,'$1.$2.$3');
+  else if (v.length>3) v = v.replace(/^(\d{3})(\d{0,3}).*$/,'$1.$2');
+  el.value = v;
+};
+const isCPF = v => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(v);
+
+// converte serial Excel (dias desde 1899-12-30) para Date local (00:00)
+function excelSerialToDate(n){
+  const base = new Date(Date.UTC(1899,11,30)); // 1899-12-30
+  const d = new Date(base.getTime() + (Number(n)*86400000));
+  return new Date(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+}
+const monthName = i => ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][i];
+
+// CSV parser robusto (separador ';', suporta aspas)
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/,''); // remove BOM
+  const out = [];
+  let row = [], cell = '', inQ = false;
+  const pushCell = () => { row.push(cell); cell=''; };
+  const pushRow = () => { out.push(row); row=[]; };
+  for (let i=0;i<text.length;i++){
+    const c = text[i], n = text[i+1];
+    if (inQ){
+      if (c === '"' && n === '"'){ cell+='"'; i++; }
+      else if (c === '"'){ inQ=false; }
+      else { cell+=c; }
+    } else {
+      if (c === '"'){ inQ=true; }
+      else if (c === ';'){ pushCell(); }
+      else if (c === '\n'){ pushCell(); pushRow(); }
+      else if (c === '\r'){ /* ignora */ }
+      else { cell+=c; }
+    }
+  }
+  if (cell.length || row.length){ pushCell(); pushRow(); }
+
+  const headers = out.shift().map(s=>s.trim());
+  return out.filter(r=>r.length && r.some(x=>String(x).trim()!=='')).map(cols=>{
+    const obj = {};
+    headers.forEach((h,i)=> obj[h] = (cols[i]??'').trim());
+    // derivados
+    const dt = excelSerialToDate(obj['DATA']);
+    obj._date = dt;
+    obj._mes = dt.getMonth();
+    return obj;
+  });
+}
+
+/* ===================== DATA ===================== */
+async function loadCSV(){
+  const loader = document.getElementById('loader');
+  loader.style.display = 'flex';
+  try{
+    const res = await fetch(CSV_URL + "?v=" + Date.now(), {cache:'no-store'});
+    if (!res.ok) throw new Error("Falha ao baixar CSV");
+    const txt = await res.text();
+    allRows = parseCSV(txt);
+    loaded = true;
+  }catch(err){
+    document.getElementById('login-msg').className='error';
+    document.getElementById('login-msg').textContent = 'Erro ao carregar dados: ' + err.message;
+  }finally{
+    loader.style.display = 'none';
+  }
+}
+
+/* ===================== UI ===================== */
+function buildMonthChips(rows){
+  const cont = document.getElementById('month-chips');
+  cont.innerHTML='';
+  const having = new Set(rows.map(r=>r._mes));
+  for (let m=0;m<12;m++){
+    const div = document.createElement('div');
+    div.className = 'chip' + (having.has(m)? '' : ' disabled');
+    div.textContent = monthName(m);
+    div.dataset.month = m;
+    div.onclick = ()=>{
+      if (!having.has(m)) return;
+      monthActive = (monthActive===m? null : m);
+      Array.from(cont.children).forEach(ch=>{
+        ch.classList.remove('sel');
+        if (Number(ch.dataset.month)===monthActive) ch.classList.add('sel');
+      });
+      renderKPIs();
+    };
+    cont.appendChild(div);
+  }
+}
+
+function applyFilters(){
+  let rows = allRows.filter(r=>r['CPF']===loggedCPF);
+  if (monthActive!==null) rows = rows.filter(r=>r._mes===monthActive);
+  if (revendaFilter!=='ALL') rows = rows.filter(r=>r['REVENDA']===revendaFilter);
+  return rows;
+}
+const countWhere = (rows, field, equals)=> rows.filter(r=>r[field]===equals).length;
+
+function renderKPIs(){
+  const rows = applyFilters();
+  document.getElementById('kpi-total').textContent    = rows.length;
+  document.getElementById('kpi-viamao').textContent   = countWhere(rows,'REVENDA','Viamão/RS');
+  document.getElementById('kpi-curitiba').textContent = countWhere(rows,'REVENDA','Curitiba/PR');
+  document.getElementById('kpi-pg').textContent       = countWhere(rows,'FÁBRICA','AMBEV - PONTA GROSSA');
+  document.getElementById('kpi-lages').textContent    = countWhere(rows,'REVENDA','Lages/SC');
+  document.getElementById('kpi-sapucaia').textContent = countWhere(rows,'FÁBRICA','AMBEV - SAPUCAIA');
+}
+
+async function doLogin(){
+  const msg = document.getElementById('login-msg');
+  const cpfInput = document.getElementById('cpf');
+  const cpf = cpfInput.value.trim();
+
+  if (!isCPF(cpf)){
+    msg.className='error'; msg.textContent='CPF inválido. Use 000.000.000-00.'; return;
+  }
+  if (!loaded){ await loadCSV(); if (!loaded) return; }
+
+  const rows = allRows.filter(r=>r['CPF']===cpf);
+  if (!rows.length){
+    msg.className='error'; msg.textContent='CPF não encontrado no CSV.'; return;
+  }
+
+  // set state
+  loggedCPF = cpf;
+  try{ localStorage.setItem('ws_cpf', cpf);}catch(e){}
+  msg.className='success'; msg.textContent='Acesso confirmado. Carregando painel…';
+
+  // header + motorista
+  const driver = (rows[0]['MOTORISTA']||'').trim() || 'Motorista';
+  document.getElementById('driver').value = driver;
+  document.getElementById('user-name').textContent = driver;
+  document.getElementById('cpf-badge').textContent = cpf;
+
+  // month chips (com base no CPF)
+  buildMonthChips(rows);
+  monthActive = null; // todos
+
+  // reset revenda
+  revendaFilter = 'ALL';
+  document.querySelectorAll('input[name="rev"]').forEach(r=> r.checked = (r.value==='ALL'));
+
+  renderKPIs();
+
+  // troca de view
+  document.getElementById('view-login').classList.add('hidden');
+  document.getElementById('view-dash').classList.remove('hidden');
+}
+
+/* ===================== Eventos ===================== */
+document.getElementById('cpf').addEventListener('input', e=>maskCPF(e.target));
+document.getElementById('btn-enter').addEventListener('click', doLogin);
+document.querySelectorAll('input[name="rev"]').forEach(radio=>{
+  radio.addEventListener('change', ()=>{ revendaFilter = document.querySelector('input[name="rev"]:checked').value; renderKPIs(); });
+});
+
+// auto fill CPF salvo
+(function init(){
+  try{
+    const saved = localStorage.getItem('ws_cpf');
+    if (saved) document.getElementById('cpf').value = saved;
+  }catch(e){}
+})();
+</script>
+</body>
+</html>
