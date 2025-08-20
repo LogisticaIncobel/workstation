@@ -1,55 +1,48 @@
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!doctype html>
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>10 Princípios Ambev</title>
-  <link rel="stylesheet" href="style.css">
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>10 PRINCÍPIOS AMBEV • Incobel</title>
   <style>
-    body {
-      background: linear-gradient(to bottom, #0a1f44, #0d274f);
-      font-family: Arial, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      height: 100vh;
-      margin: 0;
-    }
-    .container {
-      text-align: center;
-      background: rgba(255, 255, 255, 0.05);
-      padding: 20px;
-      border-radius: 20px;
-      box-shadow: 0px 0px 15px rgba(0,0,0,0.4);
-      max-width: 800px;
-      width: 90%;
-    }
-    .container img {
-      max-width: 100%;
-      height: auto;
-      border-radius: 15px;
-      margin-bottom: 20px;
-    }
-    .btn-continuar {
-      background: #007bff;
-      color: white;
-      border: none;
-      padding: 12px 24px;
-      font-size: 16px;
-      border-radius: 10px;
-      cursor: pointer;
-      transition: 0.3s;
-    }
-    .btn-continuar:hover {
-      background: #0056b3;
-    }
+:root{
+  --brand:#0e5ec3; --bg1:#051c3a; --bg2:#08325f; --bg3:#0a3e76;
+  --panel:rgba(255,255,255,.06); --line:rgba(255,255,255,.18);
+  --text:#f2f6fb; --muted:#c7d6ea; --btn:#89c3ff; --btn-text:#0a1b33;
+  --radius:14px; --shadow:0 12px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,var(--bg1), var(--bg2) 60%, var(--bg3));
+     font:15px/1.45 system-ui,Segoe UI,Roboto,Arial;color:var(--text)}
+header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+header img.logo{height:34px;width:auto}
+header .title{font-weight:800;letter-spacing:.5px}
+.container{max-width:980px;margin:0 auto;padding:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:14px}
+.center{display:grid;place-items:center}
+img.full{max-width:95%;height:auto;border-radius:12px;border:1px solid var(--line);background:#fff}
+.menu-btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 18px;background:var(--btn);color:var(--btn-text);border-radius:12px;font-weight:900;text-decoration:none;border:1px solid var(--line);cursor:pointer}
+.menu-btn:hover{filter:brightness(1.05)}
   </style>
 </head>
 <body>
-  <div class="container">
-    <img src="PRINCIPIOS.png" alt="10 Princípios Ambev">
-    <br>
-    <button class="btn-continuar" onclick="window.location.href='menu.html'">CONTINUAR</button>
+  <header>
+    <img class="logo" src="LOGO.png" alt="Logo">
+    <div class="title">10 PRINCÍPIOS AMBEV</div>
+    <div style="margin-left:auto"><a class="menu-btn" href="menu.html" title="Voltar ao Menu">← Menu</a></div>
+  </header>
+
+  <div class="container center">
+    <div class="card center">
+      <img class="full" src="PRINCIPIOS.png" alt="10 Princípios Ambev">
+      <div style="height:14px"></div>
+      <a class="menu-btn" href="menu.html">Continuar</a>
+    </div>
   </div>
+
+<script>
+  // exige login
+  try{ if(!localStorage.getItem('ws_cpf_digits')) location.href='login.html'; }catch(e){}
+</script>
 </body>
 </html>
