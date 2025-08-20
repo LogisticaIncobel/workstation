@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>MENU • Incobel</title>
+  <title>VIAGENS • Incobel</title>
   <style>
 :root{
   --brand:#0e5ec3; --bg1:#051c3a; --bg2:#08325f; --bg3:#0a3e76;
@@ -15,73 +15,296 @@
 *{box-sizing:border-box}
 body{margin:0;background:linear-gradient(180deg,var(--bg1), var(--bg2) 60%, var(--bg3));
      font:15px/1.45 system-ui,Segoe UI,Roboto,Arial;color:var(--text)}
-header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);justify-content:center}
+header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
 header img.logo{height:34px;width:auto}
-header .title{font-weight:800;letter-spacing:.5px;text-align:center}
-.container{max-width:980px;margin:0 auto;padding:14px;display:flex;justify-content:center}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;width:100%;max-width:480px;margin:auto}
+header .title{font-weight:800;letter-spacing:.5px}
+.container{max-width:980px;margin:0 auto;padding:14px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
 label{font-weight:700;font-size:13px}
 input[type="text"]{width:100%;background:#032243;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;outline:none}
 input[type="text"]:focus{border-color:#7fb6ff;box-shadow:0 0 0 3px rgba(127,182,255,.25)}
 button{background:var(--btn);color:var(--btn-text);border:none;border-radius:12px;font-weight:800;padding:12px 16px;cursor:pointer}
 button:hover{filter:brightness(1.05)}
-.hint{font-size:12px;color:var(--muted);text-align:center}
+.hint{font-size:12px;color:var(--muted)}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 16px;justify-items:center}
-.menu-btn{display:flex;align-items:center;justify-content:center;padding:14px;background:#7fb6ff;color:#08213f;border-radius:12px;font-weight:900;cursor:pointer;border:1px solid var(--line);text-decoration:none;width:100%;max-width:200px;text-align:center}
-.menu-btn:hover{filter:brightness(1.05)}
-.welcome{display:flex;align-items:center;gap:10px;margin:6px 0 10px;justify-content:center;text-align:center}
-.avatar{width:28px;height:28px;border-radius:50%;background:#dbeafe;display:grid;place-items:center;color:#08213f;font-weight:900}
-.center{display:grid;place-items:center;text-align:center}
-img.sonho-thumb{width:210px;height:auto;border-radius:10px;border:1px solid var(--line);cursor:pointer;background:#fff}
-img.sonho-full{max-width:95%;height:auto;border-radius:12px;border:1px solid var(--line);background:#fff}
 .back{display:inline-grid;place-items:center;width:36px;height:36px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer;text-decoration:none;color:var(--text)}
-/* VIAGENS widgets */
-.chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+
+/* Filtros */
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px} /* 3 colunas */
 .chip{background:#0d4f93;border:1px solid var(--line);color:#e8f1ff;padding:8px 10px;border-radius:12px;text-align:center;cursor:pointer;font-weight:700}
 .chip.disabled{opacity:.4;filter:grayscale(30%);cursor:not-allowed}
 .chip.sel{outline:2px solid #bfe0ff}
-.radios{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
+.radios{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
 .radio{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer}
 .radio input{accent-color:#7fb6ff}
+
+/* Ano */
+.year-row{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:10px}
+.year-row label{font-weight:700}
+select.year{background:#032243;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-weight:700;min-width:120px}
+
+/* KPIs e listas */
 .kpis{display:grid;grid-template-columns:1fr;gap:10px}
 .kpi{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
 .kpi .value{font-size:26px;font-weight:900}
 .factories{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.factory{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+.factory{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .factory .name{font-size:12px;color:#d5e6ff;margin-bottom:4px}
 .factory .count{font-size:22px;font-weight:900}
-</style>
+@media (max-width:520px){
+  .grid2{grid-template-columns:1fr}
+  .factories{grid-template-columns:1fr}
+}
+  </style>
 </head>
 <body>
-  <header>
-    <img class="logo" src="LOGO.png" alt="Logo">
-    <div class="title">WORKSTATION</div>
-  </header>
+  <header><img class="logo" src="LOGO.png" alt="Logo"><div class="title">VIAGENS</div><div style="margin-left:auto"><a class="back" href="menu.html" title="Voltar ao Menu">←</a></div></header>
   <div class="container">
     <div class="card">
-      <div class="welcome"><b>Seja Bem Vindo Motorista!</b> <div class="avatar">👤</div></div>
-      <div class="menu-grid">
-        <a class="menu-btn" href="viagens.html">VIAGENS</a>
-        <a class="menu-btn" href="#">FROTA</a>
-        <a class="menu-btn" href="contato.html">CONTATOS</a>
-        <a class="menu-btn" href="ponto.html">PONTO</a>
-        <a class="menu-btn" href="relato.html">RELATO</a>
-        <a class="menu-btn" href="checklist.html">CHECK LIST</a>
-        <a class="menu-btn" href="principios.html">10 PRINCÍPIOS AMBEV</a>
+      <div class="grid2">
+        <div style="flex:1 1 260px">
+          <label>Motorista</label>
+          <input type="text" id="driver" disabled>
+        </div>
+        <div class="hint">CPF: <span id="cpf-badge">—</span></div>
       </div>
-      <div class="center">
-        <a href="sonho.html"><img class="sonho-thumb" src="SONHO.png" alt="Sonho"></a>
-        <div class="hint">Toque para ver em tela cheia</div>
+
+      <div class="card" style="margin-top:12px">
+        <label>Ano e Mês</label>
+        <div class="year-row">
+          <label for="yearSel">Ano:</label>
+          <select id="yearSel" class="year"></select>
+        </div>
+        <div class="chips" id="month-chips"></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <label>Revenda</label>
+        <div class="radios">
+          <label class="radio"><input type="radio" name="rev" value="ALL" checked> <span>Todas</span></label>
+          <label class="radio"><input type="radio" name="rev" value="Lages/SC"> <span>Lages/SC</span></label>
+          <label class="radio"><input type="radio" name="rev" value="Rio do Sul/SC"> <span>Rio do Sul/SC</span></label>
+        </div>
+      </div>
+
+      <div class="kpis" style="margin-top:12px">
+        <div class="kpi"><div class="label">Total (soma dos dias únicos por fábrica)</div><div id="kpi-total" class="value">0</div></div>
+      </div>
+
+      <div class="card" style="margin-top:12px">
+        <label>Fábricas (1 viagem por dia/fábrica)</label>
+        <div id="factories" class="factories"></div>
       </div>
     </div>
   </div>
+
 <script>
-(function(){
+// ===== CONFIG =====
+const CSV_CANDIDATES = [
+  'dados.csv', './dados.csv', '../dados.csv',
+  '/dados.csv', '/workstation/dados.csv'
+];
+
+// ===== UTILS =====
+const $ = s => document.querySelector(s);
+const monthName = i => ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][i];
+const pad2 = n => String(n).padStart(2,'0');
+const onlyDigits = s => (s||'').replace(/\D/g,'');
+const dayKeyUTC = p => `${p.y}-${pad2(p.m+1)}-${pad2(p.d)}`;
+const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'').toUpperCase();
+function detectDelimiter(first){ return first.includes(';')?';':(first.includes(',')?',':';'); }
+function excelSerialToUTCParts(n){ const ms=Date.UTC(1899,11,30)+ (Number(n)*86400000); const d=new Date(ms); return {y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()}; }
+
+// ===== STATE =====
+let allRows=[], monthActive=null, revendaFilter='ALL', cpfDigits=null, cpfMasked=null, driverName='';
+let yearActive=null;
+
+// ===== CSV PARSER ROBUSTO =====
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const DEL = detectDelimiter(text.split('\n')[0]);
+
+  const rows=[]; let row=[], cell='', inQ=false;
+  const pushCell = ()=>{ row.push(cell); cell=''; };
+  const pushRow  = ()=>{ rows.push(row); row=[]; };
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(inQ){ if(c=='"'&&n=='"'){ cell+='"'; i++; } else if(c=='"'){ inQ=false; } else { cell+=c; } }
+    else   { if(c=='"'){ inQ=true; } else if(c===DEL){ pushCell(); } else if(c=='\n'){ pushCell(); pushRow(); } else { cell+=c; } }
+  }
+  if(cell.length||row.length){ pushCell(); pushRow(); }
+  if(!rows.length) return [];
+
+  const headerRaw = rows.shift().map(x=>(x||'').trim());
+  const headerMap = {}; headerRaw.forEach((h,i)=> headerMap[norm(h)] = i);
+
+  const idx = (...alts) => {
+    for(const a of alts){ const i = headerMap[norm(a)]; if(i!=null) return i; }
+    for(const k in headerMap){ if(k.includes(norm(alts[0]))) return headerMap[k]; }
+    return -1;
+  };
+
+  const iData = idx('DATA');
+  const iFab  = idx('FÁBRICA','FABRICA');
+  const iRev  = idx('REVENDA');
+  const iCPF  = idx('CPF');
+  const iMot  = idx('MOTORISTA');
+
+  const out=[];
+  for(const r of rows){
+    const get = i => (r[i]??'').toString().trim();
+
+    // DATA
+    const rawData = get(iData);
+    let p=null;
+    if(/^\d{5}(\.\d+)?$/.test(rawData)){
+      p = excelSerialToUTCParts(Number(rawData));
+    }else if(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.test(rawData)){
+      const m=rawData.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+      const dd=+m[1], mm=+m[2]-1, yy=+(m[3].length===2?('20'+m[3]):m[3]);
+      const d=new Date(Date.UTC(yy,mm,dd));
+      p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()};
+    }else{
+      const d=new Date(rawData);
+      if(!isNaN(d)) p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()};
+    }
+    if(!p) continue;
+
+    const cpf = get(iCPF);
+    const obj = {
+      _utc:p, _mes:p.m, _ano:p.y, _dayKey:dayKeyUTC(p),
+      'FÁBRICA': get(iFab).replace(/\s+/g,' ').trim(),
+      'REVENDA': get(iRev).replace(/\s+/g,' ').trim(),
+      'CPF': cpf,
+      '_cpfDigits': onlyDigits(cpf),
+      'MOTORISTA': get(iMot).replace(/\s+/g,' ').trim()
+    };
+    out.push(obj);
+  }
+  return out;
+}
+
+// ===== LOAD CSV (MULTI-CAMINHO) =====
+async function tryLoadCSV(){
+  for(const path of CSV_CANDIDATES){
+    try{
+      const res = await fetch(path+'?v='+Date.now(), {cache:'no-store'});
+      if(!res.ok) continue;
+      const txt = await res.text();
+      const rows = parseCSV(txt);
+      if(rows && rows.length){ return {rows, path}; }
+    }catch(e){}
+  }
+  throw new Error('Não foi possível carregar o dados.csv em nenhum caminho testado.');
+}
+
+// ===== LÓGICA =====
+function rowsForLogged(){
+  let rows = allRows.filter(r => r['_cpfDigits'] === cpfDigits);
+  if(yearActive!==null) rows = rows.filter(r=> r._ano === yearActive);
+  if(monthActive!==null) rows = rows.filter(r=> r._mes === monthActive);
+  if(revendaFilter!=='ALL') rows = rows.filter(r=> r['REVENDA'] === revendaFilter);
+  return rows;
+}
+function perFactoryUniqueDays(rows){
+  const map=new Map();
+  rows.forEach(r=>{
+    const f=r['FÁBRICA']; if(!f) return;
+    let set=map.get(f); if(!set){ set=new Set(); map.set(f,set); }
+    set.add(r._dayKey);
+  });
+  return Array.from(map.entries()).map(([name,set])=>({name, count:set.size}))
+              .sort((a,b)=> b.count-a.count || a.name.localeCompare(b.name));
+}
+function render(){
+  const rows = rowsForLogged();
+  const list = perFactoryUniqueDays(rows);
+  const total = list.reduce((s,it)=> s+it.count, 0);
+  document.getElementById('kpi-total').textContent = total;
+  const cont = document.getElementById('factories'); cont.innerHTML='';
+  list.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='factory';
+    d.innerHTML = `<div class="name">${it.name}</div><div class="count">${it.count}</div>`;
+    cont.appendChild(d);
+  });
+}
+function buildMonthChips(rowsCPF){
+  const cont=document.getElementById('month-chips'); cont.innerHTML='';
+  // meses existentes no ano ativo
+  const months = new Set(rowsCPF.filter(r=> r._ano===yearActive).map(r=> r._mes));
+  for(let m=0;m<12;m++){
+    const div=document.createElement('div');
+    div.className='chip'+(months.has(m)?'':' disabled');
+    div.textContent=monthName(m); div.dataset.month=m;
+    div.onclick=()=>{ if(!months.has(m)) return; monthActive=(monthActive===m?null:m);
+      Array.from(cont.children).forEach(ch=>{ch.classList.remove('sel'); if(Number(ch.dataset.month)===monthActive) ch.classList.add('sel');});
+      render();
+    };
+    cont.appendChild(div);
+  }
+}
+function buildYearSelect(rowsCPF){
+  const sel = document.getElementById('yearSel');
+  sel.innerHTML = '';
+  const years = Array.from(new Set(rowsCPF.map(r=>r._ano))).sort((a,b)=>a-b);
+  // define padrão: ano atual se existir; senão o mais recente
+  const current = (new Date()).getFullYear();
+  yearActive = years.includes(current) ? current : years[years.length-1];
+  years.forEach(y=>{
+    const opt = document.createElement('option');
+    opt.value = y; opt.textContent = y; if(y===yearActive) opt.selected=true;
+    sel.appendChild(opt);
+  });
+  sel.onchange = ()=>{
+    yearActive = Number(sel.value);
+    monthActive = null; // limpa seleção de mês ao trocar ano
+    buildMonthChips(rowsCPF);
+    render();
+  };
+}
+
+// radios
+document.querySelectorAll('input[name="rev"]').forEach(r=> r.addEventListener('change', ()=>{
+  revendaFilter = document.querySelector('input[name="rev"]:checked').value;
+  render();
+}));
+
+// ===== START =====
+(async function init(){
   try{
-    const d=localStorage.getItem('ws_cpf_digits');
-    if(!d) location.href='login.html';
-  }catch(e){}
+    // pega CPF salvo no login
+    try{
+      cpfDigits = localStorage.getItem('ws_cpf_digits');
+      cpfMasked = localStorage.getItem('ws_cpf_masked');
+      driverName = localStorage.getItem('ws_motorista') || '';
+    }catch(e){}
+    if(!cpfDigits){ location.href='login.html'; return; }
+    document.getElementById('cpf-badge')?.innerText = cpfMasked || '—';
+
+    // carrega CSV (testa múltiplos caminhos)
+    const {rows} = await tryLoadCSV();
+    allRows = rows;
+
+    // filtra do CPF
+    const rowsCPF = allRows.filter(r => r['_cpfDigits'] === cpfDigits);
+    if(!rowsCPF.length){
+      alert('CPF não encontrado no CSV');
+      return;
+    }
+
+    if(!driverName) driverName = rowsCPF[0]['MOTORISTA'] || 'Motorista';
+    document.getElementById('driver').value = driverName;
+
+    // popula anos e meses
+    buildYearSelect(rowsCPF);
+    buildMonthChips(rowsCPF);
+
+    // primeira render
+    render();
+  }catch(err){
+    alert('Erro ao carregar dados: ' + err.message);
+  }
 })();
 </script>
 </body>
