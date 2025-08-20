@@ -51,7 +51,7 @@ img.sonho-full{max-width:95%;height:auto;border-radius:12px;border:1px solid var
 .factory{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
 .factory .name{font-size:12px;color:#d5e6ff;margin-bottom:4px}
 .factory .count{font-size:22px;font-weight:900}
-</style>
+  </style>
 </head>
 <body>
   <header><img class="logo" src="LOGO.png" alt="Logo"><div class="title">VIAGENS</div><div style="margin-left:auto"><a class="back" href="menu.html" title="Voltar ao Menu">←</a></div></header>
@@ -63,6 +63,16 @@ img.sonho-full{max-width:95%;height:auto;border-radius:12px;border:1px solid var
           <input type="text" id="driver" disabled>
         </div>
         <div class="hint">CPF: <span id="cpf-badge">—</span></div>
+      </div>
+
+      <!-- Fallback: campo CPF caso não exista no localStorage -->
+      <div id="cpf-fallback" class="card" style="margin-top:12px; display:none">
+        <label>Informe seu CPF (apenas se o login não salvou):</label>
+        <div style="display:flex; gap:8px; flex-wrap:wrap">
+          <input type="text" id="cpf-inline" placeholder="000.000.000-00" inputmode="numeric" maxlength="14" style="flex:1">
+          <button id="btn-apply-cpf">Aplicar CPF</button>
+          <div class="hint">Usaremos este CPF para filtrar o CSV e salvaremos para as próximas visitas.</div>
+        </div>
       </div>
 
       <div class="card" style="margin-top:12px">
@@ -89,6 +99,7 @@ img.sonho-full{max-width:95%;height:auto;border-radius:12px;border:1px solid var
       </div>
     </div>
   </div>
+
 <script>
 // ===== CONFIG =====
 const CSV_CANDIDATES = [
@@ -237,28 +248,63 @@ document.querySelectorAll('input[name="rev"]').forEach(r=> r.addEventListener('c
   render();
 }));
 
+// ===== CPF FALLBACK =====
+function maskCPF(el){
+  let v=el.value.replace(/\D/g,'').slice(0,11);
+  if(v.length>9) v=v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*$/,'$1.$2.$3-$4');
+  else if(v.length>6) v=v.replace(/^(\d{3})(\d{3})(\d{0,3}).*$/,'$1.$2.$3');
+  else if(v.length>3) v=v.replace(/^(\d{3})(\d{0,3}).*$/,'$1.$2');
+  el.value=v;
+}
+function showCpfFallback(){
+  const box = document.getElementById('cpf-fallback');
+  box.style.display = '';
+  const inp = document.getElementById('cpf-inline');
+  inp.addEventListener('input', e=>maskCPF(e.target));
+  document.getElementById('btn-apply-cpf').onclick = ()=>{
+    const masked = inp.value.trim();
+    if(!/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(masked)){ alert('CPF inválido.'); return; }
+    cpfDigits = onlyDigits(masked);
+    cpfMasked = masked;
+    try{ localStorage.setItem('ws_cpf_digits', cpfDigits); localStorage.setItem('ws_cpf_masked', masked); }catch(e){}
+    document.getElementById('cpf-badge').innerText = cpfMasked;
+    // Após definir o CPF, renderizamos com base no CSV já carregado
+    const rowsCPF = allRows.filter(r => r['_cpfDigits'] === cpfDigits);
+    if(!rowsCPF.length){ alert('CPF não encontrado no CSV'); return; }
+    if(!driverName) driverName = rowsCPF[0]['MOTORISTA'] || 'Motorista';
+    document.getElementById('driver').value = driverName;
+    buildMonthChips(rowsCPF);
+    render();
+    box.style.display='none';
+  };
+}
+
 // ===== START =====
 (async function init(){
   try{
-    // pega CPF salvo no login
+    // tenta pegar do localStorage
     try{
       cpfDigits = localStorage.getItem('ws_cpf_digits');
       cpfMasked = localStorage.getItem('ws_cpf_masked');
       driverName = localStorage.getItem('ws_motorista') || '';
     }catch(e){}
-    if(!cpfDigits){ location.href='login.html'; return; }
-    document.getElementById('cpf-badge')?.innerText = cpfMasked || '—';
+    if(cpfMasked) document.getElementById('cpf-badge').innerText = cpfMasked;
 
     // carrega CSV (testa múltiplos caminhos)
-    const {rows, path} = await tryLoadCSV();
+    const {rows} = await tryLoadCSV();
     allRows = rows;
 
-    // filtra do CPF
+    // Se não houver CPF salvo, permite informar na própria página
+    if(!cpfDigits){
+      showCpfFallback();
+      return;
+    }
+
+    // filtra pelo CPF
     const rowsCPF = allRows.filter(r => r['_cpfDigits'] === cpfDigits);
     if(!rowsCPF.length){
-      alert('CPF não encontrado no CSV');
-      // dica visual opcional no console:
-      console.warn('CSV carregado de:', path, '| CPF (dígitos) procurado:', cpfDigits);
+      // CPF salvo mas não existe no CSV -> permite corrigir na hora
+      showCpfFallback();
       return;
     }
 
