@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Check List</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    body {
+      background: linear-gradient(to bottom, #0a1f44, #0d274f);
+      font-family: Arial, sans-serif;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      margin: 0;
+    }
+    .container {
+      text-align: center;
+      background: rgba(255, 255, 255, 0.05);
+      padding: 25px;
+      border-radius: 20px;
+      box-shadow: 0px 0px 15px rgba(0,0,0,0.4);
+      max-width: 700px;
+      width: 90%;
+      color: #fff;
+    }
+    .container h1 {
+      margin-bottom: 20px;
+      font-size: 26px;
+      color: #ffffff;
+    }
+    .container p {
+      font-size: 16px;
+      line-height: 1.6;
+      margin-bottom: 25px;
+      color: #dcdcdc;
+    }
+    .btn {
+      display: inline-block;
+      background: #007bff;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      font-size: 16px;
+      border-radius: 10px;
+      cursor: pointer;
+      transition: 0.3s;
+      margin: 10px;
+      text-decoration: none;
+    }
+    .btn:hover {
+      background: #0056b3;
+    }
+    .btn-voltar {
+      background: #6c757d;
+    }
+    .btn-voltar:hover {
+      background: #4a4e52;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>CHECK LIST</h1>
+    <p>
+      Clique abaixo para realizar um Check List, após clicar você será redirecionado 
+      para abrir ou instalar e abrir o aplicativo.
+    </p>
+    <p>
+      O acesso é através de seu CPF e uma senha, em caso de erro, esquecimento de senha, 
+      ou primeiro acesso, contate o Supervisor de Distribuição.
+    </p>
+    <p>
+      Para contatar, retorne até a página inicial e clique em "Contatos".
+    </p>
+
+    <a href="https://logisticaincobel.github.io/ID-GESTRAN/" class="btn" target="_blank">Realizar um Check List</a>
+    <br>
+    <button class="btn btn-voltar" onclick="window.location.href='menu.html'">VOLTAR</button>
+  </div>
+</body>
+</html>
