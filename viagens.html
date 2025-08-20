@@ -90,87 +90,107 @@ img.sonho-full{max-width:95%;height:auto;border-radius:12px;border:1px solid var
     </div>
   </div>
 <script>
-const CSV_URL = 'dados.csv'; // se o CSV estiver em /workstation/, mantenha assim
-let allRows=[], monthActive=null, revendaFilter='ALL', cpfDigits=null, cpfMasked=null, driverName='';
-const $=s=>document.querySelector(s);
-const monthName=i=>['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][i];
-const pad2=n=>String(n).padStart(2,'0');
-function excelSerialToUTCParts(n){const ms=Date.UTC(1899,11,30)+ (Number(n)*86400000); const d=new Date(ms);return {y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()};}
-const dayKeyUTC=p=>`${p.y}-${pad2(p.m+1)}-${pad2(p.d)}`;
-const onlyDigits=s=>(s||'').replace(/\D/g,'');
-const norm=(s)=> (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'').toUpperCase(); // remove acento/espaço e upper
-function detectDelimiter(firstLine){return firstLine.indexOf(';')>-1?';':(firstLine.indexOf(',')>-1?',':';');}
+// ===== CONFIG =====
+const CSV_CANDIDATES = [
+  'dados.csv', './dados.csv', '../dados.csv',
+  '/dados.csv', '/workstation/dados.csv'
+];
 
-// CSV robusto (aceita ; ou , e nomes de coluna com variações)
+// ===== UTILS =====
+const $ = s => document.querySelector(s);
+const monthName = i => ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][i];
+const pad2 = n => String(n).padStart(2,'0');
+const onlyDigits = s => (s||'').replace(/\D/g,'');
+const dayKeyUTC = p => `${p.y}-${pad2(p.m+1)}-${pad2(p.d)}`;
+const norm = s => (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'').toUpperCase();
+function detectDelimiter(first){ return first.includes(';')?';':(first.includes(',')?',':';'); }
+function excelSerialToUTCParts(n){ const ms=Date.UTC(1899,11,30)+ (Number(n)*86400000); const d=new Date(ms); return {y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()}; }
+
+// ===== STATE =====
+let allRows=[], monthActive=null, revendaFilter='ALL', cpfDigits=null, cpfMasked=null, driverName='';
+
+// ===== CSV PARSER ROBUSTO =====
 function parseCSV(text){
   text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
   const DEL = detectDelimiter(text.split('\n')[0]);
-  // separação com suporte a aspas
-  const rows=[]; let cell='', row=[], inQ=false;
-  const pushCell=()=>{row.push(cell);cell='';}; const pushRow=()=>{rows.push(row);row=[];};
+
+  const rows=[]; let row=[], cell='', inQ=false;
+  const pushCell = ()=>{ row.push(cell); cell=''; };
+  const pushRow  = ()=>{ rows.push(row); row=[]; };
   for(let i=0;i<text.length;i++){
     const c=text[i], n=text[i+1];
-    if(inQ){ if(c=='"'&&n=='"'){cell+='"';i++;} else if(c=='"'){inQ=false;} else{cell+=c;} }
-    else { if(c=='"'){inQ=true;} else if(c===DEL){pushCell();} else if(c=='\n'){pushCell();pushRow();} else {cell+=c;} }
+    if(inQ){ if(c=='"'&&n=='"'){ cell+='"'; i++; } else if(c=='"'){ inQ=false; } else { cell+=c; } }
+    else   { if(c=='"'){ inQ=true; } else if(c===DEL){ pushCell(); } else if(c=='\n'){ pushCell(); pushRow(); } else { cell+=c; } }
   }
-  if(cell.length||row.length){pushCell();pushRow();}
-
+  if(cell.length||row.length){ pushCell(); pushRow(); }
   if(!rows.length) return [];
-  const headerRaw = rows.shift().map(x=> (x||'').trim());
-  const headerMap = {}; headerRaw.forEach((h,idx)=> headerMap[norm(h)]=idx);
 
-  // pega índices tolerantes
-  const idx = (nameAlts)=> {
-    for(const key of nameAlts){
-      const i = headerMap[norm(key)];
-      if(i!=null) return i;
-    }
-    // tenta por regex ampla (ex.: CPF com espaço)
-    for(const k in headerMap){
-      if(k.includes(norm(nameAlts[0]))) return headerMap[k];
-    }
+  const headerRaw = rows.shift().map(x=>(x||'').trim());
+  const headerMap = {}; headerRaw.forEach((h,i)=> headerMap[norm(h)] = i);
+
+  const idx = (...alts) => {
+    for(const a of alts){ const i = headerMap[norm(a)]; if(i!=null) return i; }
+    for(const k in headerMap){ if(k.includes(norm(alts[0]))) return headerMap[k]; }
     return -1;
   };
 
-  const iData  = idx(['DATA']);
-  const iFab   = idx(['FÁBRICA','FABRICA']);
-  const iRev   = idx(['REVENDA']);
-  const iCPF   = idx(['CPF']);
-  const iMot   = idx(['MOTORISTA']);
+  const iData = idx('DATA');
+  const iFab  = idx('FÁBRICA','FABRICA');
+  const iRev  = idx('REVENDA');
+  const iCPF  = idx('CPF');
+  const iMot  = idx('MOTORISTA');
 
   const out=[];
   for(const r of rows){
-    const get = (i)=> (r[i]??'').toString().trim();
-    // DATA pode ser serial ou dd/mm/aaaa
+    const get = i => (r[i]??'').toString().trim();
+
+    // DATA: serial Excel ou dd/mm/aaaa ou ISO
     const rawData = get(iData);
     let p=null;
-    if(/^\d{5}(\.\d+)?$/.test(rawData)){ const n=Number(rawData); const d=new Date(Date.UTC(1899,11,30)+n*86400000); p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()}; }
-    else if(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.test(rawData)){ const m=rawData.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); const dd=+m[1], mm=+m[2]-1, yy=+(m[3].length===2?('20'+m[3]):m[3]); const d=new Date(Date.UTC(yy,mm,dd)); p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()}; }
-    else { const d=new Date(rawData); if(!isNaN(d)) p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()}; }
+    if(/^\d{5}(\.\d+)?$/.test(rawData)){
+      p = excelSerialToUTCParts(Number(rawData));
+    }else if(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.test(rawData)){
+      const m=rawData.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+      const dd=+m[1], mm=+m[2]-1, yy=+(m[3].length===2?('20'+m[3]):m[3]);
+      const d=new Date(Date.UTC(yy,mm,dd));
+      p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()};
+    }else{
+      const d=new Date(rawData);
+      if(!isNaN(d)) p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()};
+    }
     if(!p) continue;
 
-    const obj={
+    const cpf = get(iCPF);
+    const obj = {
       _utc:p, _mes:p.m, _dayKey:dayKeyUTC(p),
       'FÁBRICA': get(iFab).replace(/\s+/g,' ').trim(),
       'REVENDA': get(iRev).replace(/\s+/g,' ').trim(),
-      'CPF': get(iCPF).trim(),
-      '_cpfDigits': onlyDigits(get(iCPF)),
-      'MOTORISTA': get(iMot).replace(/\s+/g,' ').trim(),
+      'CPF': cpf,
+      '_cpfDigits': onlyDigits(cpf),
+      'MOTORISTA': get(iMot).replace(/\s+/g,' ').trim()
     };
     out.push(obj);
   }
   return out;
 }
 
-async function loadCSV(){
-  const res = await fetch(CSV_URL + '?v=' + Date.now(), {cache:'no-store'});
-  if(!res.ok) throw new Error('Falha ao baixar dados.csv');
-  const txt = await res.text();
-  allRows = parseCSV(txt);
+// ===== LOAD CSV (MULTI-CAMINHO) =====
+async function tryLoadCSV(){
+  for(const path of CSV_CANDIDATES){
+    try{
+      const res = await fetch(path+'?v='+Date.now(), {cache:'no-store'});
+      if(!res.ok) continue;
+      const txt = await res.text();
+      const rows = parseCSV(txt);
+      if(rows && rows.length){ return {rows, path}; }
+    }catch(e){}
+  }
+  throw new Error('Não foi possível carregar o dados.csv em nenhum caminho testado.');
 }
 
+// ===== LÓGICA =====
 function rowsForLogged(){
-  let rows = allRows.filter(r=> r['_cpfDigits'] === cpfDigits);
+  let rows = allRows.filter(r => r['_cpfDigits'] === cpfDigits);
   if(monthActive!==null) rows = rows.filter(r=> r._mes === monthActive);
   if(revendaFilter!=='ALL') rows = rows.filter(r=> r['REVENDA'] === revendaFilter);
   return rows;
@@ -179,55 +199,77 @@ function perFactoryUniqueDays(rows){
   const map=new Map();
   rows.forEach(r=>{
     const f=r['FÁBRICA']; if(!f) return;
-    let set=map.get(f); if(!set){set=new Set(); map.set(f,set);}
+    let set=map.get(f); if(!set){ set=new Set(); map.set(f,set); }
     set.add(r._dayKey);
   });
   return Array.from(map.entries()).map(([name,set])=>({name, count:set.size}))
               .sort((a,b)=> b.count-a.count || a.name.localeCompare(b.name));
 }
 function render(){
-  const rows=rowsForLogged();
-  const list=perFactoryUniqueDays(rows);
-  const total=list.reduce((s,it)=>s+it.count,0);
-  $('#kpi-total').textContent = total;
-  $('#driver').value = driverName;
-  const cont = $('#factories'); cont.innerHTML='';
+  const rows = rowsForLogged();
+  const list = perFactoryUniqueDays(rows);
+  const total = list.reduce((s,it)=> s+it.count, 0);
+  document.getElementById('kpi-total').textContent = total;
+  const cont = document.getElementById('factories'); cont.innerHTML='';
   list.forEach(it=>{
     const d=document.createElement('div');
     d.className='factory';
-    d.innerHTML=`<div class="name">${it.name}</div><div class="count">${it.count}</div>`;
+    d.innerHTML = `<div class="name">${it.name}</div><div class="count">${it.count}</div>`;
     cont.appendChild(d);
   });
 }
 function buildMonthChips(rowsCPF){
-  const cont=$('#month-chips'); cont.innerHTML='';
+  const cont=document.getElementById('month-chips'); cont.innerHTML='';
   const months=new Set(rowsCPF.map(r=>r._mes));
   for(let m=0;m<12;m++){
     const div=document.createElement('div');
     div.className='chip'+(months.has(m)?'':' disabled');
     div.textContent=monthName(m); div.dataset.month=m;
-    div.onclick=()=>{ if(!months.has(m)) return; monthActive=(monthActive===m?null:m); Array.from(cont.children).forEach(ch=>{ch.classList.remove('sel'); if(Number(ch.dataset.month)===monthActive) ch.classList.add('sel');}); render(); };
+    div.onclick=()=>{ if(!months.has(m)) return; monthActive=(monthActive===m?null:m);
+      Array.from(cont.children).forEach(ch=>{ch.classList.remove('sel'); if(Number(ch.dataset.month)===monthActive) ch.classList.add('sel');});
+      render();
+    };
     cont.appendChild(div);
   }
 }
-// radios
-document.querySelectorAll('input[name="rev"]').forEach(radio=> radio.addEventListener('change',()=>{
+document.querySelectorAll('input[name="rev"]').forEach(r=> r.addEventListener('change', ()=>{
   revendaFilter = document.querySelector('input[name="rev"]:checked').value;
   render();
 }));
 
-// init
-(async function(){
-  try{ cpfDigits = localStorage.getItem('ws_cpf_digits'); cpfMasked = localStorage.getItem('ws_cpf_masked'); driverName = localStorage.getItem('ws_motorista') || ''; }catch(e){}
-  if(!cpfDigits){ location.href='login.html'; return; }
-  document.getElementById('cpf-badge')?.innerText = cpfMasked || '—';
-  await loadCSV();
-  const rowsCPF = allRows.filter(r=> r['_cpfDigits'] === cpfDigits);
-  if(!rowsCPF.length){ alert('CPF não encontrado no CSV'); return; }
-  if(!driverName) driverName = (rowsCPF[0]['MOTORISTA'] || 'Motorista');
-  document.getElementById('driver').value = driverName;
-  buildMonthChips(rowsCPF);
-  render();
+// ===== START =====
+(async function init(){
+  try{
+    // pega CPF salvo no login
+    try{
+      cpfDigits = localStorage.getItem('ws_cpf_digits');
+      cpfMasked = localStorage.getItem('ws_cpf_masked');
+      driverName = localStorage.getItem('ws_motorista') || '';
+    }catch(e){}
+    if(!cpfDigits){ location.href='login.html'; return; }
+    document.getElementById('cpf-badge')?.innerText = cpfMasked || '—';
+
+    // carrega CSV (testa múltiplos caminhos)
+    const {rows, path} = await tryLoadCSV();
+    allRows = rows;
+
+    // filtra do CPF
+    const rowsCPF = allRows.filter(r => r['_cpfDigits'] === cpfDigits);
+    if(!rowsCPF.length){
+      alert('CPF não encontrado no CSV');
+      // dica visual opcional no console:
+      console.warn('CSV carregado de:', path, '| CPF (dígitos) procurado:', cpfDigits);
+      return;
+    }
+
+    if(!driverName) driverName = rowsCPF[0]['MOTORISTA'] || 'Motorista';
+    document.getElementById('driver').value = driverName;
+
+    buildMonthChips(rowsCPF);
+    render();
+  }catch(err){
+    alert('Erro ao carregar dados: ' + err.message);
+  }
 })();
 </script>
 </body>
