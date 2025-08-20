@@ -1,4 +1,3 @@
-
 <!doctype html>
 <html lang="pt-br">
 <head>
@@ -29,7 +28,7 @@ button:hover{filter:brightness(1.05)}
 .error{color:#ffd5d5}
 .success{color:#bbf7d0}
 .grid2{display:grid;grid-template-columns:1fr auto;gap:12px}
-</style>
+  </style>
 </head>
 <body>
   <header><img class="logo" src="LOGO.png" alt="Logo"><div class="title">LOGIN</div></header>
@@ -47,51 +46,90 @@ button:hover{filter:brightness(1.05)}
       </div>
     </div>
   </div>
+
 <script>
 const CSV_URL='dados.csv';
-function maskCPF(el){let v=el.value.replace(/\D/g,'').slice(0,11);
- if(v.length>9)v=v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*$/,'$1.$2.$3-$4');
- else if(v.length>6)v=v.replace(/^(\d{3})(\d{3})(\d{0,3}).*$/,'$1.$2.$3');
- else if(v.length>3)v=v.replace(/^(\d{3})(\d{0,3}).*$/,'$1.$2'); el.value=v;}
+
+// máscara de CPF (mesmo visual de antes)
+function maskCPF(el){
+  let v=el.value.replace(/\D/g,'').slice(0,11);
+  if(v.length>9) v=v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*$/,'$1.$2.$3-$4');
+  else if(v.length>6) v=v.replace(/^(\d{3})(\d{3})(\d{0,3}).*$/,'$1.$2.$3');
+  else if(v.length>3) v=v.replace(/^(\d{3})(\d{0,3}).*$/,'$1.$2');
+  el.value=v;
+}
 document.getElementById('cpf').addEventListener('input',e=>maskCPF(e.target));
+
+// util
 function onlyDigits(s){return (s||'').replace(/\D/g,'');}
-function detectDelimiter(headerLine){return (headerLine.indexOf(';')>-1)?';':(headerLine.indexOf(',')>-1?',':';');}
+function detectDelimiter(firstLine){
+  return firstLine.indexOf(';')>-1 ? ';' : (firstLine.indexOf(',')>-1 ? ',' : ';');
+}
+
+// lê apenas as colunas necessárias pra validar (CPF e MOTORISTA)
 function parseCSVForCPFs(text){
-  text=text.replace(/^\uFEFF/,'');
-  text=text.replace(/\r\n/g,'\n').replace(/\r/g,'\n');
-  const DEL=detectDelimiter(text.split('\n')[0]);
-  const lines=text.split('\n').filter(Boolean);
-  const headers=lines.shift().split(DEL).map(s=>s.trim());
-  const idxCPF = headers.findIndex(h=>/^(cpf|CPF)$/.test(h));
+  text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const DEL = detectDelimiter(text.split('\n')[0]);
+  const lines = text.split('\n').filter(Boolean);
+  const headers = lines.shift().split(DEL).map(s=>s.trim());
+
+  const idxCPF = headers.findIndex(h=>/^(CPF|Cpf|cpf)$/.test(h));
   const idxMot = headers.findIndex(h=>/^(MOTORISTA|motorista)$/.test(h));
-  const list=[];
+  if(idxCPF<0){ throw new Error('Coluna CPF não encontrada no CSV.'); }
+
+  const out=[];
   for(const ln of lines){
     const cols = ln.split(DEL);
     const cpf = (cols[idxCPF]||'').trim();
-    const mot = (cols[idxMot]||'').trim();
-    if(cpf) list.push({digits: onlyDigits(cpf), masked: cpf, mot});
+    const mot = (idxMot>=0 ? (cols[idxMot]||'').trim() : '');
+    if(cpf) out.push({digits: onlyDigits(cpf), mot});
   }
-  return list;
+  return out;
 }
+
+// valida contra o CSV antes de salvar/localStorage e redirecionar
 async function validateAndLogin(){
-  const masked=document.getElementById('cpf').value.trim();
-  const msg=document.getElementById('msg');
-  if(!/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(masked)){ msg.className='error'; msg.textContent='CPF inválido. Use 000.000.000-00.'; return; }
-  const digits=onlyDigits(masked);
-  msg.className='hint'; msg.textContent='Validando CPF no banco...';
+  const masked = document.getElementById('cpf').value.trim();
+  const msg = document.getElementById('msg');
+
+  if(!/^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(masked)){
+    msg.className='error';
+    msg.textContent='CPF inválido. Use 000.000.000-00.';
+    return;
+  }
+
+  const digits = onlyDigits(masked);
+  msg.className='hint';
+  msg.textContent='Validando CPF no banco...';
+
   try{
-    const res=await fetch(CSV_URL+'?v='+Date.now(),{cache:'no-store'});
-    if(!res.ok) throw new Error('Não encontrei o dados.csv');
-    const txt=await res.text();
-    const cpfs=parseCSVForCPFs(txt);
-    const found = cpfs.find(x=>x.digits===digits);
-    if(!found){ msg.className='error'; msg.textContent='CPF não encontrado no CSV.'; return; }
-    try{localStorage.setItem('ws_cpf_digits',digits); localStorage.setItem('ws_cpf_masked',masked); localStorage.setItem('ws_motorista', found.mot || '');}catch(e){}
+    const res = await fetch(CSV_URL+'?v='+Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error('Não encontrei o dados.csv no mesmo diretório.');
+
+    const txt = await res.text();
+    const cpfs = parseCSVForCPFs(txt);
+    const found = cpfs.find(x=> x.digits === digits);
+
+    if(!found){
+      msg.className='error';
+      msg.textContent='CPF não encontrado no CSV.';
+      return; // **não avança**
+    }
+
+    // sucesso: grava e avança
+    try{
+      localStorage.setItem('ws_cpf_digits', digits);
+      localStorage.setItem('ws_cpf_masked', masked);
+      localStorage.setItem('ws_motorista', found.mot || '');
+    }catch(e){}
+
     location.href='menu.html';
   }catch(err){
-    msg.className='error'; msg.textContent='Erro: '+err.message;
+    msg.className='error';
+    msg.textContent='Erro: '+err.message;
   }
 }
+
 document.getElementById('btn-enter').addEventListener('click', validateAndLogin);
 </script>
 </body>
