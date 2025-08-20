@@ -1,120 +1,475 @@
-
-<!DOCTYPE html>
-<html lang="pt-BR">
+<!doctype html>
+<html lang="pt-br">
 <head>
-  <meta charset="UTF-8">
-  <title>Workstation Incobel</title>
-  <style>
-    body {
-      margin: 0;
-      font-family: Arial, sans-serif;
-      background-color: #003366;
-      color: white;
-      text-align: center;
-    }
-    header {
-      background-color: #002244;
-      padding: 10px;
-    }
-    header img {
-      height: 40px;
-    }
-    .container {
-      padding: 20px;
-    }
-    .btn {
-      display: block;
-      margin: 10px auto;
-      padding: 12px 20px;
-      background-color: #3399ff;
-      color: white;
-      border: none;
-      border-radius: 8px;
-      font-size: 16px;
-      cursor: pointer;
-      width: 200px;
-    }
-    .btn:hover {
-      background-color: #2878c7;
-    }
-    .hidden { display: none; }
-    .avatar {
-      font-size: 40px;
-      margin: 10px;
-    }
-    .back-btn {
-      position: absolute;
-      left: 20px;
-      top: 70px;
-      background-color: #555;
-      border-radius: 50%;
-      width: 40px;
-      height: 40px;
-      font-size: 20px;
-    }
-    img.sonho-thumb {
-      width: 180px;
-      margin-top: 20px;
-      cursor: pointer;
-    }
-    img.sonho-big {
-      width: 80%;
-      max-width: 400px;
-      margin: 20px auto;
-      display: block;
-    }
-  </style>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>INCObel • Portal</title>
+<style>
+  :root{
+    --brand:#0e5ec3; --bg1:#051c3a; --bg2:#08325f; --bg3:#0a3e76;
+    --panel:rgba(255,255,255,.06); --line:rgba(255,255,255,.18);
+    --text:#f2f6fb; --muted:#c7d6ea; --chip:#0d4f93; --chip-on:#0e6bd1;
+    --radius:14px; --shadow:0 12px 28px rgba(0,0,0,.35);
+    --btn:#89c3ff; --btn-text:#0a1b33;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;background:linear-gradient(180deg,var(--bg1), var(--bg2) 60%, var(--bg3));
+       font:15px/1.45 system-ui,Segoe UI,Roboto,Arial;color:var(--text)}
+  a{color:inherit;text-decoration:none}
+  .wrap{max-width:980px;margin:0 auto;padding:14px;display:grid;grid-template-columns:260px 1fr;gap:14px}
+  @media (max-width:840px){ .wrap{grid-template-columns:1fr} }
+  .sidebar{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:12px;position:sticky;top:10px;height:fit-content}
+  .brand{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+  .drop{width:22px;height:22px;border-radius:50%;background:#7fb6ff;box-shadow:inset 0 -6px 12px rgba(0,0,0,.2)}
+  .brand b{letter-spacing:.4px}
+  .nav a{display:block;padding:10px 12px;border-radius:10px;margin:4px 0;border:1px solid transparent}
+  .nav a.active{background:#0b4c95;border-color:var(--line)}
+  .card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow)}
+  .topbar{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line)}
+  .title{font-weight:800;letter-spacing:.5px}
+  .content{padding:12px}
+  .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+  label{font-weight:700;font-size:13px}
+  input[type="text"]{width:100%;background:#032243;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;outline:none}
+  input[type="text"]:focus{border-color:#7fb6ff;box-shadow:0 0 0 3px rgba(127,182,255,.25)}
+  button{background:var(--btn);color:var(--btn-text);border:none;border-radius:12px;font-weight:800;padding:12px 16px;cursor:pointer}
+  button:hover{filter:brightness(1.05)}
+  .hint{font-size:12px;color:var(--muted)}
+  .error{color:#ffd5d5}.success{color:#bbf7d0}
+  .chips{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+  .chip{background:var(--chip);border:1px solid var(--line);color:#e8f1ff;padding:8px 10px;border-radius:12px;text-align:center;cursor:pointer;font-weight:700}
+  .chip.disabled{opacity:.4;filter:grayscale(30%);cursor:not-allowed}
+  .chip.sel{outline:2px solid #bfe0ff}
+  .radios{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+  .radio{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer}
+  .radio input{accent-color:#7fb6ff}
+  .kpis{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+  .kpi{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
+  .kpi.big{grid-column:1/-1}
+  .kpi .value{font-size:26px;font-weight:900}
+  .kpi .label{font-size:12px;color:#d5e6ff}
+  .factories{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .factory{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+  .factory .name{font-size:12px;color:#d5e6ff;margin-bottom:4px}
+  .factory .count{font-size:22px;font-weight:900}
+  .note{font-size:12px;color:#cfe3ff99;margin-top:-6px}
+  .hidden{display:none}
+  .menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 16px}
+  .menu-btn{display:flex;align-items:center;justify-content:center;padding:14px;background:#7fb6ff;color:#08213f;border-radius:12px;font-weight:900;cursor:pointer;border:1px solid var(--line)}
+  .menu-btn:hover{filter:brightness(1.05)}
+  .welcome{display:flex;align-items:center;gap:10px;margin:6px 0 10px}
+  .avatar{width:28px;height:28px;border-radius:50%;background:#dbeafe;display:grid;place-items:center;color:#08213f;font-weight:900}
+  .sonho-wrap{display:grid;place-items:center;margin:8px 0 4px}
+  .sonho-img{width:210px;height:auto;border-radius:10px;border:1px solid var(--line);cursor:pointer;background:#fff}
+  .center{display:grid;place-items:center}
+  .back{display:inline-grid;place-items:center;width:36px;height:36px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer}
+</style>
 </head>
 <body>
+  <div class="wrap">
+    <aside class="sidebar">
+      <div class="brand"><div class="drop"></div><b>INCObel • Portal</b></div>
+      <div class="nav">
+        <a href="#menu" id="nav-menu" class="active">Menu</a>
+        <a href="#viagens" id="nav-viagens">Viagens</a>
+        <a href="#detalhes" id="nav-detalhes">Detalhes (dias únicos)</a>
+        <a href="#resumo" id="nav-resumo">Resumo mensal</a>
+        <a href="#sonho" id="nav-sonho">Sonho</a>
+      </div>
+      <div class="hint" style="margin-top:8px">CPF logado: <span id="cpf-badge">—</span></div>
+    </aside>
 
-  <header>
-    <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/f/fb/Ambev_logo.svg/2560px-Ambev_logo.svg.png" alt="Logo">
-    <h2>WORKSTATION</h2>
-  </header>
+    <main id="views">
+      <!-- LOGIN -->
+      <div id="view-login" class="card">
+        <div class="topbar">
+          <div class="title">LOGIN</div>
+          <div class="loader" id="loader" style="display:none"><span>carregando dados…</span></div>
+        </div>
+        <div class="content">
+          <div class="row">
+            <div style="flex:1 1 240px">
+              <label for="cpf">CPF</label>
+              <input type="text" id="cpf" placeholder="000.000.000-00" inputmode="numeric" maxlength="14">
+              <div id="login-msg" class="hint">Digite seu CPF e clique em <b>Entrar</b>.</div>
+            </div>
+            <div>
+              <label>&nbsp;</label>
+              <button id="btn-enter" type="button">Entrar</button>
+            </div>
+          </div>
+          <div class="hint">Arquivos necessários no mesmo diretório: <b>dados.csv</b> e <b>sonho.png</b>.</div>
+        </div>
+      </div>
 
-  <!-- LOGIN -->
-  <div id="login" class="container">
-    <h2>Login</h2>
-    <input type="text" id="cpf" placeholder="Digite seu CPF"><br><br>
-    <button class="btn" onclick="goTo('menu')">Entrar</button>
+      <!-- MENU -->
+      <div id="view-menu" class="card hidden">
+        <div class="topbar">
+          <div class="title">WORKSTATION</div>
+          <div class="hint" id="user-name-menu">—</div>
+        </div>
+        <div class="content">
+          <div class="welcome"><b>Seja Bem Vindo Motorista!</b> <div class="avatar">👤</div></div>
+          <div class="menu-grid">
+            <div class="menu-btn" data-goto="#viagens">VIAGENS</div>
+            <div class="menu-btn" data-goto="#frota">FROTA</div>
+            <div class="menu-btn" data-goto="#contatos">CONTATOS</div>
+            <div class="menu-btn" data-goto="#ponto">PONTO</div>
+            <div class="menu-btn" data-goto="#relato">RELATO</div>
+            <div class="menu-btn" data-goto="#checklist">CHECK LIST</div>
+            <div class="menu-btn" data-goto="#principios">10 PRINCÍPIOS AMBEV</div>
+          </div>
+          <div class="sonho-wrap">
+            <img id="sonho-thumb" class="sonho-img" alt="Sonho" src="sonho.png">
+            <div class="hint">Toque na imagem para ver em tela cheia</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- VIAGENS -->
+      <div id="view-viagens" class="card hidden">
+        <div class="topbar">
+          <div class="row">
+            <div class="back" id="btn-back-menu" title="Voltar ao Menu">←</div>
+          </div>
+          <div class="title">VIAGENS</div>
+          <div class="hint" id="user-name">Motorista</div>
+        </div>
+        <div class="content">
+          <div class="row">
+            <div style="flex:1 1 260px">
+              <label>Motorista</label>
+              <input type="text" id="driver" disabled>
+            </div>
+          </div>
+
+          <div class="section">
+            <label>Mês</label>
+            <div class="chips" id="month-chips"></div>
+          </div>
+
+          <div class="section">
+            <label>Revenda</label>
+            <div class="radios">
+              <label class="radio"><input type="radio" name="rev" value="ALL" checked> <span>Todas</span></label>
+              <label class="radio"><input type="radio" name="rev" value="Lages/SC"> <span>Lages/SC</span></label>
+              <label class="radio"><input type="radio" name="rev" value="Rio do Sul/SC"> <span>Rio do Sul/SC</span></label>
+            </div>
+          </div>
+
+          <div class="kpis">
+            <div class="kpi big"><div class="label">Total (soma dos dias únicos por fábrica)</div><div id="kpi-total" class="value">0</div></div>
+          </div>
+
+          <div class="section">
+            <label>Fábricas (1 viagem por dia/fábrica)</label>
+            <div id="factories" class="factories"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- DETALHES -->
+      <div id="view-detalhes" class="card hidden">
+        <div class="topbar"><div class="title">Detalhes • Dias únicos por fábrica</div>
+          <div class="row">
+            <button id="btn-export">Exportar CSV</button>
+          </div>
+        </div>
+        <div class="content">
+          <div class="hint" id="det-filtros">—</div>
+          <table id="tbl">
+            <thead>
+              <tr><th>Data</th><th>Fábrica</th><th>Revenda</th><th>Cavalo</th><th>Carreta</th></tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- RESUMO -->
+      <div id="view-resumo" class="card hidden">
+        <div class="topbar"><div class="title">Resumo mensal (dias únicos)</div></div>
+        <div class="content">
+          <div class="hint">Matriz por <b>FÁBRICA × REVENDA</b> (1 viagem por dia). Use os filtros em VIAGENS — são globais.</div>
+          <table id="tbl-resumo">
+            <thead><tr><th>Fábrica</th><th>Lages/SC</th><th>Rio do Sul/SC</th><th>Total</th></tr></thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- SONHO -->
+      <div id="view-sonho" class="card hidden">
+        <div class="topbar"><div class="title">SONHO</div></div>
+        <div class="content center">
+          <img id="sonho-full" src="sonho.png" alt="Sonho" style="max-width:95%;height:auto;border-radius:12px;border:1px solid var(--line);background:#fff">
+          <div style="height:12px"></div>
+          <button id="btn-sonho-continuar">Continuar</button>
+        </div>
+      </div>
+
+      <!-- PLACEHOLDERS -->
+      <div id="view-frota" class="card hidden"><div class="topbar"><div class="title">FROTA</div></div><div class="content">Em breve.</div></div>
+      <div id="view-contatos" class="card hidden"><div class="topbar"><div class="title">CONTATOS</div></div><div class="content">Em breve.</div></div>
+      <div id="view-ponto" class="card hidden"><div class="topbar"><div class="title">PONTO</div></div><div class="content">Em breve.</div></div>
+      <div id="view-relato" class="card hidden"><div class="topbar"><div class="title">RELATO</div></div><div class="content">Em breve.</div></div>
+      <div id="view-checklist" class="card hidden"><div class="topbar"><div class="title">CHECK LIST</div></div><div class="content">Em breve.</div></div>
+      <div id="view-principios" class="card hidden"><div class="topbar"><div class="title">10 PRINCÍPIOS AMBEV</div></div><div class="content">Em breve.</div></div>
+    </main>
   </div>
 
-  <!-- MENU -->
-  <div id="menu" class="container hidden">
-    <h3>Seja Bem Vindo Motorista!</h3>
-    <div class="avatar">👤</div>
+<script>
+/* ===================== CONFIG ===================== */
+const CSV_URL = "dados.csv";
 
-    <button class="btn" onclick="goTo('viagens')">VIAGENS</button>
-    <button class="btn">FROTA</button>
-    <button class="btn">CONTATOS</button>
-    <button class="btn">PONTO</button>
-    <button class="btn">RELATO</button>
-    <button class="btn">CHECK LIST</button>
-    <button class="btn">10 PRINCÍPIOS AMBEV</button>
+/* ===================== ESTADO ===================== */
+let allRows = [];
+let loaded = false;
+let loggedCPF = null;
+let driverName = '';
+let monthActive = null;    // 0..11 ou null
+let revendaFilter = 'ALL'; // ALL | Lages/SC | Rio do Sul/SC
 
-    <img src="sonho.png" alt="Sonho" class="sonho-thumb" onclick="goTo('sonho')">
-  </div>
+/* ===================== UTIL ===================== */
+const $ = s => document.querySelector(s);
+const $$ = s => Array.from(document.querySelectorAll(s));
+const maskCPF = (el)=>{
+  let v = el.value.replace(/\D/g,'').slice(0,11);
+  if (v.length>9) v = v.replace(/^(\d{3})(\d{3})(\d{3})(\d{0,2}).*$/,'$1.$2.$3-$4');
+  else if (v.length>6) v = v.replace(/^(\d{3})(\d{3})(\d{0,3}).*$/,'$1.$2.$3');
+  else if (v.length>3) v = v.replace(/^(\d{3})(\d{0,3}).*$/,'$1.$2');
+  el.value = v;
+};
+const isCPF = v => /^\d{3}\.\d{3}\.\d{3}-\d{2}$/.test(v);
+function excelSerialToUTCParts(n){
+  const ms = Date.UTC(1899,11,30) + (Number(n)*86400000);
+  const d = new Date(ms);
+  return { y:d.getUTCFullYear(), m:d.getUTCMonth(), d:d.getUTCDate() };
+}
+const pad2 = n => String(n).padStart(2,'0');
+const monthName = i => ['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][i];
+const dayKeyUTC = p => `${p.y}-${pad2(p.m+1)}-${pad2(p.d)}`;
+const fmtDate = p => `${pad2(p.d)}/${pad2(p.m+1)}/${p.y}`;
 
-  <!-- VIAGENS -->
-  <div id="viagens" class="container hidden">
-    <button class="back-btn" onclick="goTo('menu')">←</button>
-    <h3>VIAGENS</h3>
-    <p>Aqui entram os filtros e contadores já criados.</p>
-  </div>
+/* ===================== CSV ===================== */
+function parseCSV(text){
+  text = text.replace(/^\uFEFF/,''); // BOM
+  const out = []; let row=[], cell='', inQ=false;
+  const pushCell=()=>{row.push(cell);cell='';}; const pushRow=()=>{out.push(row);row=[];};
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(inQ){ if(c=='"'&&n=='"'){cell+='"';i++;} else if(c=='"'){inQ=false;} else{cell+=c;} }
+    else { if(c=='"'){inQ=true;} else if(c==';'){pushCell();} else if(c=='\n'){pushCell();pushRow();} else if(c=='\r'){} else{cell+=c;} }
+  }
+  if(cell.length||row.length){pushCell();pushRow();}
+  const headers=out.shift().map(s=>s.trim());
+  return out.filter(r=>r.length&&r.some(x=>String(x).trim()!=='')).map(cols=>{
+    const obj={}; headers.forEach((h,i)=>obj[h]=(cols[i]??'').trim());
+    const n = Number(obj['DATA']); if(!isFinite(n)) return null;
+    const p = excelSerialToUTCParts(n);
+    obj._utc = p; obj._mes = p.m; obj._dayKey = dayKeyUTC(p);
+    obj['FÁBRICA'] = (obj['FÁBRICA']||'').replace(/\s+/g,' ').trim();
+    obj['REVENDA'] = (obj['REVENDA']||'').replace(/\s+/g,' ').trim();
+    obj['CPF']     = (obj['CPF']||'').trim();
+    obj['CAVALO']  = (obj['CAVALO']||'').trim();
+    obj['CARRETA'] = (obj['CARRETA']||'').trim();
+    obj['MOTORISTA']=(obj['MOTORISTA']||'').replace(/\s+/g,' ').trim();
+    return obj;
+  }).filter(Boolean);
+}
+async function loadCSV(){
+  const loader = $('#loader'); if(loader) loader.style.display='flex';
+  try{
+    const res = await fetch(CSV_URL+"?v="+Date.now(), {cache:'no-store'});
+    if(!res.ok) throw new Error("Falha ao baixar CSV");
+    const txt = await res.text();
+    allRows = parseCSV(txt);
+    loaded = true;
+  }catch(err){
+    const m=$('#login-msg'); m.className='error'; m.textContent='Erro ao carregar dados: '+err.message;
+  }finally{ if($('#loader')) $('#loader').style.display='none'; }
+}
 
-  <!-- SONHO -->
-  <div id="sonho" class="container hidden">
-    <h3>Nosso Sonho</h3>
-    <img src="sonho.png" alt="Sonho Grande" class="sonho-big">
-    <button class="btn" onclick="goTo('menu')">Continuar</button>
-  </div>
+/* ===================== CORE ===================== */
+function rowsForLogged(){
+  let rows = allRows.filter(r=>r['CPF']===loggedCPF);
+  if(monthActive!==null) rows = rows.filter(r=>r._mes===monthActive);
+  if(revendaFilter!=='ALL') rows = rows.filter(r=>r['REVENDA']===revendaFilter);
+  return rows;
+}
+function perFactoryUniqueDays(rows){
+  const map = new Map(); // fabrica -> Set(dayKey)
+  rows.forEach(r=>{
+    const fab = r['FÁBRICA']; if(!fab) return;
+    let set = map.get(fab); if(!set){ set = new Set(); map.set(fab, set); }
+    set.add(r._dayKey);
+  });
+  const list = Array.from(map.entries()).map(([name,set])=>({name, count:set.size}));
+  list.sort((a,b)=> b.count-a.count || a.name.localeCompare(b.name));
+  return list;
+}
+function perFactoryPerDayRows(rows){
+  const seen = new Set(); const out = [];
+  rows.forEach(r=>{
+    const key = r._dayKey + '|' + r['FÁBRICA'];
+    if(seen.has(key)) return; seen.add(key);
+    out.push({ day:r._utc, fabrica:r['FÁBRICA'], revenda:r['REVENDA'], cavalo:r['CAVALO'], carreta:r['CARRETA'] });
+  });
+  out.sort((a,b)=> (a.day.y-b.day.y) || (a.day.m-b.day.m) || (a.day.d-b.day.d) || a.fabrica.localeCompare(b.fabrica));
+  return out;
+}
+function resumoMatriz(rows){
+  const map = new Map(); // fabrica -> {L:Set,R:Set}
+  rows.forEach(r=>{
+    const fab=r['FÁBRICA'], rev=r['REVENDA']; if(!fab) return;
+    const key = rev==='Lages/SC' ? 'L' : (rev==='Rio do Sul/SC' ? 'R' : null);
+    if(!key) return;
+    let obj = map.get(fab); if(!obj){ obj={L:new Set(),R:new Set()}; map.set(fab,obj); }
+    obj[key].add(r._dayKey);
+  });
+  const arr=[]; map.forEach((v,k)=> arr.push({fabrica:k,lages:v.L.size,rios:v.R.size,total:v.L.size+v.R.size}));
+  arr.sort((a,b)=> b.total-a.total || a.fabrica.localeCompare(b.fabrica));
+  return arr;
+}
 
-  <script>
-    function goTo(pageId) {
-      document.querySelectorAll('.container').forEach(div => div.classList.add('hidden'));
-      document.getElementById(pageId).classList.remove('hidden');
-    }
-  </script>
+/* ===================== RENDER ===================== */
+function renderViagens(){
+  const rows = rowsForLogged();
+  const list = perFactoryUniqueDays(rows);
+  const total = list.reduce((s,it)=>s+it.count,0);
+  $('#kpi-total').textContent = total;
+  $('#driver').value = driverName;
+  $('#user-name').textContent = driverName;
 
+  const cont = $('#factories'); cont.innerHTML='';
+  list.forEach(it=>{
+    const card=document.createElement('div');
+    card.className='factory';
+    card.innerHTML=`<div class="name">${it.name}</div><div class="count">${it.count}</div>`;
+    cont.appendChild(card);
+  });
+}
+function renderMonthChips(rowsCPF){
+  const cont = $('#month-chips'); cont.innerHTML='';
+  const monthsWithData = new Set(rowsCPF.map(r=>r._mes));
+  for(let m=0;m<12;m++){
+    const div=document.createElement('div');
+    div.className='chip'+(monthsWithData.has(m)?'':' disabled');
+    div.textContent=monthName(m); div.dataset.month=m;
+    div.onclick=()=>{
+      if(!monthsWithData.has(m)) return;
+      monthActive = (monthActive===m? null : m);
+      Array.from(cont.children).forEach(ch=>{ ch.classList.remove('sel'); if(Number(ch.dataset.month)===monthActive) ch.classList.add('sel'); });
+      renderViagens(); renderDetalhes(); renderResumo();
+    };
+    cont.appendChild(div);
+  }
+}
+function renderDetalhes(){
+  const rows = perFactoryPerDayRows(rowsForLogged());
+  const tb = $('#tbl tbody'); tb.innerHTML='';
+  rows.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${fmtDate(r.day)}</td><td>${r.fabrica}</td><td>${r.revenda||''}</td><td>${r.cavalo||''}</td><td>${r.carreta||''}</td>`;
+    tb.appendChild(tr);
+  });
+  $('#det-filtros').textContent = `Mês: ${monthActive===null?'Todos':monthName(monthActive)} • Revenda: ${revendaFilter==='ALL'?'Todas':revendaFilter} • Linhas: ${rows.length}`;
+}
+function renderResumo(){
+  const rows = rowsForLogged();
+  const mat = resumoMatriz(rows);
+  const tb = $('#tbl-resumo tbody'); tb.innerHTML='';
+  mat.forEach(r=>{
+    const tr = document.createElement('tr');
+    tr.innerHTML = `<td>${r.fabrica}</td><td>${r.lages}</td><td>${r.rios}</td><td><b>${r.total}</b></td>`;
+    tb.appendChild(tr);
+  });
+}
+function renderMenu(){
+  $('#user-name-menu').textContent = driverName;
+}
+
+/* ===================== NAV ===================== */
+function go(hash){
+  $$('.nav a').forEach(a=>a.classList.remove('active'));
+  const routes = ['menu','viagens','detalhes','resumo','sonho','frota','contatos','ponto','relato','checklist','principios'];
+  routes.forEach(r=> $('#view-'+r)?.classList.add('hidden'));
+  switch(hash){
+    case '#viagens': $('#nav-viagens').classList.add('active'); $('#view-viagens').classList.remove('hidden'); break;
+    case '#detalhes': $('#nav-detalhes').classList.add('active'); $('#view-detalhes').classList.remove('hidden'); break;
+    case '#resumo': $('#nav-resumo').classList.add('active'); $('#view-resumo').classList.remove('hidden'); break;
+    case '#sonho': $('#nav-sonho').classList.add('active'); $('#view-sonho').classList.remove('hidden'); break;
+    case '#frota': $('#view-frota').classList.remove('hidden'); break;
+    case '#contatos': $('#view-contatos').classList.remove('hidden'); break;
+    case '#ponto': $('#view-ponto').classList.remove('hidden'); break;
+    case '#relato': $('#view-relato').classList.remove('hidden'); break;
+    case '#checklist': $('#view-checklist').classList.remove('hidden'); break;
+    case '#principios': $('#view-principios').classList.remove('hidden'); break;
+    default: $('#nav-menu').classList.add('active'); $('#view-menu').classList.remove('hidden');
+  }
+}
+window.addEventListener('hashchange', ()=>go(location.hash||'#menu'));
+
+/* ===================== EXPORT ===================== */
+function exportDetalhesCSV(){
+  const rows = perFactoryPerDayRows(rowsForLogged());
+  const header = ['DATA','FÁBRICA','REVENDA','CAVALO','CARRETA'];
+  const lines = [header.join(';')];
+  rows.forEach(r=>{
+    lines.push([fmtDate(r.day), r.fabrica, r.revenda||'', r.cavalo||'', r.carreta||''].map(v=> `"${String(v).replace(/"/g,'""')}"`).join(';'));
+  });
+  const blob = new Blob([lines.join('\n')], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='detalhes.csv'; a.click();
+  setTimeout(()=>URL.revokeObjectURL(url), 2000);
+}
+
+/* ===================== LOGIN ===================== */
+async function doLogin(){
+  const msg = $('#login-msg');
+  const cpf = $('#cpf').value.trim();
+  if(!isCPF(cpf)){ msg.className='error'; msg.textContent='CPF inválido. Use 000.000.000-00.'; return; }
+  if(!loaded){ await loadCSV(); if(!loaded) return; }
+
+  const rowsCPF = allRows.filter(r=>r['CPF']===cpf);
+  if(!rowsCPF.length){ msg.className='error'; msg.textContent='CPF não encontrado no CSV.'; return; }
+
+  loggedCPF = cpf; driverName = (rowsCPF[0]['MOTORISTA']||'').replace(/\s+/g,' ').trim() || 'Motorista';
+  try{ localStorage.setItem('ws_cpf', cpf);}catch(e){}
+  $('#cpf-badge').textContent = cpf;
+
+  renderMonthChips(rowsCPF);
+  monthActive = null; revendaFilter = 'ALL'; $$('input[name="rev"]').forEach(r=> r.checked=(r.value==='ALL'));
+  renderViagens(); renderDetalhes(); renderResumo(); renderMenu();
+
+  location.hash = '#menu';
+}
+
+/* ===================== INIT & EVENTOS ===================== */
+(function init(){
+  // Clicks de menu
+  $$('.menu-btn').forEach(btn=> btn.addEventListener('click', ()=>{ location.hash = btn.dataset.goto; }));
+  $('#sonho-thumb').addEventListener('click', ()=>{ location.hash = '#sonho'; });
+  $('#btn-sonho-continuar').addEventListener('click', ()=>{ location.hash = '#menu'; });
+  $('#btn-back-menu').addEventListener('click', ()=>{ location.hash = '#menu'; });
+
+  // filtros globais
+  $$('#view-viagens input[name="rev"]').forEach(radio=>{
+    radio.addEventListener('change', ()=>{ revendaFilter = document.querySelector('#view-viagens input[name="rev"]:checked').value; renderViagens(); renderDetalhes(); renderResumo(); });
+  });
+  $('#btn-export').addEventListener('click', exportDetalhesCSV);
+
+  // login
+  $('#cpf').addEventListener('input', e=>maskCPF(e.target));
+  $('#btn-enter').addEventListener('click', doLogin);
+
+  // auto fill CPF salvo
+  try{ const saved=localStorage.getItem('ws_cpf'); if(saved) $('#cpf').value=saved; }catch(e){}
+
+  // start
+  go('#login');
+  window.dispatchEvent(new HashChangeEvent('hashchange'));
+})();
+</script>
 </body>
 </html>
