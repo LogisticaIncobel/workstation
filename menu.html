@@ -15,24 +15,24 @@
 *{box-sizing:border-box}
 body{margin:0;background:linear-gradient(180deg,var(--bg1), var(--bg2) 60%, var(--bg3));
      font:15px/1.45 system-ui,Segoe UI,Roboto,Arial;color:var(--text)}
-header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel);justify-content:center}
 header img.logo{height:34px;width:auto}
-header .title{font-weight:800;letter-spacing:.5px}
-.container{max-width:980px;margin:0 auto;padding:14px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px}
+header .title{font-weight:800;letter-spacing:.5px;text-align:center}
+.container{max-width:980px;margin:0 auto;padding:14px;display:flex;justify-content:center}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);padding:14px;width:100%;max-width:480px;margin:auto}
 label{font-weight:700;font-size:13px}
 input[type="text"]{width:100%;background:#032243;color:var(--text);border:1px solid var(--line);border-radius:12px;padding:10px 12px;outline:none}
 input[type="text"]:focus{border-color:#7fb6ff;box-shadow:0 0 0 3px rgba(127,182,255,.25)}
 button{background:var(--btn);color:var(--btn-text);border:none;border-radius:12px;font-weight:800;padding:12px 16px;cursor:pointer}
 button:hover{filter:brightness(1.05)}
-.hint{font-size:12px;color:var(--muted)}
+.hint{font-size:12px;color:var(--muted);text-align:center}
 .grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
-.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 16px}
-.menu-btn{display:flex;align-items:center;justify-content:center;padding:14px;background:#7fb6ff;color:#08213f;border-radius:12px;font-weight:900;cursor:pointer;border:1px solid var(--line);text-decoration:none}
+.menu-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0 16px;justify-items:center}
+.menu-btn{display:flex;align-items:center;justify-content:center;padding:14px;background:#7fb6ff;color:#08213f;border-radius:12px;font-weight:900;cursor:pointer;border:1px solid var(--line);text-decoration:none;width:100%;max-width:200px;text-align:center}
 .menu-btn:hover{filter:brightness(1.05)}
-.welcome{display:flex;align-items:center;gap:10px;margin:6px 0 10px}
+.welcome{display:flex;align-items:center;gap:10px;margin:6px 0 10px;justify-content:center;text-align:center}
 .avatar{width:28px;height:28px;border-radius:50%;background:#dbeafe;display:grid;place-items:center;color:#08213f;font-weight:900}
-.center{display:grid;place-items:center}
+.center{display:grid;place-items:center;text-align:center}
 img.sonho-thumb{width:210px;height:auto;border-radius:10px;border:1px solid var(--line);cursor:pointer;background:#fff}
 img.sonho-full{max-width:95%;height:auto;border-radius:12px;border:1px solid var(--line);background:#fff}
 .back{display:inline-grid;place-items:center;width:36px;height:36px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer;text-decoration:none;color:var(--text)}
@@ -41,20 +41,23 @@ img.sonho-full{max-width:95%;height:auto;border-radius:12px;border:1px solid var
 .chip{background:#0d4f93;border:1px solid var(--line);color:#e8f1ff;padding:8px 10px;border-radius:12px;text-align:center;cursor:pointer;font-weight:700}
 .chip.disabled{opacity:.4;filter:grayscale(30%);cursor:not-allowed}
 .chip.sel{outline:2px solid #bfe0ff}
-.radios{display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.radios{display:flex;gap:14px;align-items:center;flex-wrap:wrap;justify-content:center}
 .radio{display:flex;align-items:center;gap:8px;padding:6px 10px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.06);cursor:pointer}
 .radio input{accent-color:#7fb6ff}
 .kpis{display:grid;grid-template-columns:1fr;gap:10px}
 .kpi{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
 .kpi .value{font-size:26px;font-weight:900}
 .factories{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-.factory{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.factory{background:#0b4c95;border:1px solid var(--line);border-radius:12px;padding:10px 12px;text-align:center}
 .factory .name{font-size:12px;color:#d5e6ff;margin-bottom:4px}
 .factory .count{font-size:22px;font-weight:900}
 </style>
 </head>
 <body>
-  <header><img class="logo" src="LOGO.png" alt="Logo"><div class="title">WORKSTATION</div></header>
+  <header>
+    <img class="logo" src="LOGO.png" alt="Logo">
+    <div class="title">WORKSTATION</div>
+  </header>
   <div class="container">
     <div class="card">
       <div class="welcome"><b>Seja Bem Vindo Motorista!</b> <div class="avatar">👤</div></div>
