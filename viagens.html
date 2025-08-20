@@ -90,82 +90,142 @@ img.sonho-full{max-width:95%;height:auto;border-radius:12px;border:1px solid var
     </div>
   </div>
 <script>
-const CSV_URL='dados.csv';
+const CSV_URL = 'dados.csv'; // se o CSV estiver em /workstation/, mantenha assim
 let allRows=[], monthActive=null, revendaFilter='ALL', cpfDigits=null, cpfMasked=null, driverName='';
 const $=s=>document.querySelector(s);
 const monthName=i=>['janeiro','fevereiro','março','abril','maio','junho','julho','agosto','setembro','outubro','novembro','dezembro'][i];
 const pad2=n=>String(n).padStart(2,'0');
 function excelSerialToUTCParts(n){const ms=Date.UTC(1899,11,30)+ (Number(n)*86400000); const d=new Date(ms);return {y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()};}
 const dayKeyUTC=p=>`${p.y}-${pad2(p.m+1)}-${pad2(p.d)}`;
-function onlyDigits(s){return (s||'').replace(/\D/g,'');}
+const onlyDigits=s=>(s||'').replace(/\D/g,'');
+const norm=(s)=> (s||'').normalize('NFD').replace(/[\u0300-\u036f]/g,'').replace(/\s+/g,'').toUpperCase(); // remove acento/espaço e upper
+function detectDelimiter(firstLine){return firstLine.indexOf(';')>-1?';':(firstLine.indexOf(',')>-1?',':';');}
+
+// CSV robusto (aceita ; ou , e nomes de coluna com variações)
 function parseCSV(text){
-  text=text.replace(/^\\uFEFF/,'');
-  const out=[];let row=[],cell='',inQ=false;
-  const pushCell=()=>{row.push(cell);cell='';}; const pushRow=()=>{out.push(row);row=[];};
-  for(let i=0;i<text.length;i++){const c=text[i],n=text[i+1];
-    if(inQ){if(c=='\"'&&n=='\"'){cell+='\"';i++;} else if(c=='\"'){inQ=false;} else{cell+=c;}}
-    else{if(c=='\"'){inQ=true;} else if(c==';'){pushCell();} else if(c=='\\n'){pushCell();pushRow();} else if(c=='\\r'){} else{cell+=c;}}
+  text = text.replace(/^\uFEFF/,'').replace(/\r\n/g,'\n').replace(/\r/g,'\n');
+  const DEL = detectDelimiter(text.split('\n')[0]);
+  // separação com suporte a aspas
+  const rows=[]; let cell='', row=[], inQ=false;
+  const pushCell=()=>{row.push(cell);cell='';}; const pushRow=()=>{rows.push(row);row=[];};
+  for(let i=0;i<text.length;i++){
+    const c=text[i], n=text[i+1];
+    if(inQ){ if(c=='"'&&n=='"'){cell+='"';i++;} else if(c=='"'){inQ=false;} else{cell+=c;} }
+    else { if(c=='"'){inQ=true;} else if(c===DEL){pushCell();} else if(c=='\n'){pushCell();pushRow();} else {cell+=c;} }
   }
   if(cell.length||row.length){pushCell();pushRow();}
-  const headers=out.shift().map(s=>s.trim());
-  return out.filter(r=>r.length&&r.some(x=>String(x).trim()!=='')).map(cols=>{
-    const obj={}; headers.forEach((h,i)=>obj[h]=(cols[i]??'').trim());
-    const n=Number(obj['DATA']); if(!isFinite(n)) return null;
-    const p=excelSerialToUTCParts(n);
-    obj._utc=p; obj._mes=p.m; obj._dayKey=dayKeyUTC(p);
-    obj['FÁBRICA']=(obj['FÁBRICA']||'').replace(/\\s+/g,' ').trim();
-    obj['REVENDA']=(obj['REVENDA']||'').replace(/\\s+/g,' ').trim();
-    obj['CPF']=(obj['CPF']||'').trim();
-    obj['_cpfDigits']=onlyDigits(obj['CPF']);
-    obj['MOTORISTA']=(obj['MOTORISTA']||'').replace(/\\s+/g,' ').trim();
-    return obj;
-  }).filter(Boolean);
+
+  if(!rows.length) return [];
+  const headerRaw = rows.shift().map(x=> (x||'').trim());
+  const headerMap = {}; headerRaw.forEach((h,idx)=> headerMap[norm(h)]=idx);
+
+  // pega índices tolerantes
+  const idx = (nameAlts)=> {
+    for(const key of nameAlts){
+      const i = headerMap[norm(key)];
+      if(i!=null) return i;
+    }
+    // tenta por regex ampla (ex.: CPF com espaço)
+    for(const k in headerMap){
+      if(k.includes(norm(nameAlts[0]))) return headerMap[k];
+    }
+    return -1;
+  };
+
+  const iData  = idx(['DATA']);
+  const iFab   = idx(['FÁBRICA','FABRICA']);
+  const iRev   = idx(['REVENDA']);
+  const iCPF   = idx(['CPF']);
+  const iMot   = idx(['MOTORISTA']);
+
+  const out=[];
+  for(const r of rows){
+    const get = (i)=> (r[i]??'').toString().trim();
+    // DATA pode ser serial ou dd/mm/aaaa
+    const rawData = get(iData);
+    let p=null;
+    if(/^\d{5}(\.\d+)?$/.test(rawData)){ const n=Number(rawData); const d=new Date(Date.UTC(1899,11,30)+n*86400000); p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()}; }
+    else if(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/.test(rawData)){ const m=rawData.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/); const dd=+m[1], mm=+m[2]-1, yy=+(m[3].length===2?('20'+m[3]):m[3]); const d=new Date(Date.UTC(yy,mm,dd)); p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()}; }
+    else { const d=new Date(rawData); if(!isNaN(d)) p={y:d.getUTCFullYear(),m:d.getUTCMonth(),d:d.getUTCDate()}; }
+    if(!p) continue;
+
+    const obj={
+      _utc:p, _mes:p.m, _dayKey:dayKeyUTC(p),
+      'FÁBRICA': get(iFab).replace(/\s+/g,' ').trim(),
+      'REVENDA': get(iRev).replace(/\s+/g,' ').trim(),
+      'CPF': get(iCPF).trim(),
+      '_cpfDigits': onlyDigits(get(iCPF)),
+      'MOTORISTA': get(iMot).replace(/\s+/g,' ').trim(),
+    };
+    out.push(obj);
+  }
+  return out;
 }
+
 async function loadCSV(){
-  const res=await fetch(CSV_URL+'?v='+Date.now(),{cache:'no-store'});
-  if(!res.ok) throw new Error('Falha ao baixar CSV');
-  const txt=await res.text();
-  allRows=parseCSV(txt);
+  const res = await fetch(CSV_URL + '?v=' + Date.now(), {cache:'no-store'});
+  if(!res.ok) throw new Error('Falha ao baixar dados.csv');
+  const txt = await res.text();
+  allRows = parseCSV(txt);
 }
+
 function rowsForLogged(){
-  let rows=allRows.filter(r=>r['_cpfDigits']===cpfDigits);
-  if(monthActive!==null) rows=rows.filter(r=>r._mes===monthActive);
-  if(revendaFilter!=='ALL') rows=rows.filter(r=>r['REVENDA']===revendaFilter);
+  let rows = allRows.filter(r=> r['_cpfDigits'] === cpfDigits);
+  if(monthActive!==null) rows = rows.filter(r=> r._mes === monthActive);
+  if(revendaFilter!=='ALL') rows = rows.filter(r=> r['REVENDA'] === revendaFilter);
   return rows;
 }
 function perFactoryUniqueDays(rows){
   const map=new Map();
-  rows.forEach(r=>{const f=r['FÁBRICA']; if(!f) return; let set=map.get(f); if(!set){set=new Set(); map.set(f,set);} set.add(r._dayKey);});
-  const list=Array.from(map.entries()).map(([name,set])=>({name, count:set.size}));
-  list.sort((a,b)=> b.count-a.count || a.name.localeCompare(b.name));
-  return list;
+  rows.forEach(r=>{
+    const f=r['FÁBRICA']; if(!f) return;
+    let set=map.get(f); if(!set){set=new Set(); map.set(f,set);}
+    set.add(r._dayKey);
+  });
+  return Array.from(map.entries()).map(([name,set])=>({name, count:set.size}))
+              .sort((a,b)=> b.count-a.count || a.name.localeCompare(b.name));
 }
 function render(){
   const rows=rowsForLogged();
   const list=perFactoryUniqueDays(rows);
   const total=list.reduce((s,it)=>s+it.count,0);
-  document.getElementById('kpi-total').textContent=total;
-  document.getElementById('driver').value=driverName;
-  document.getElementById('cpf-badge').textContent=cpfMasked||'—';
-  const cont=document.getElementById('factories'); cont.innerHTML='';
-  list.forEach(it=>{const d=document.createElement('div'); d.className='factory'; d.innerHTML=`<div class="name">${it.name}</div><div class="count">${it.count}</div>`; cont.appendChild(d);});
+  $('#kpi-total').textContent = total;
+  $('#driver').value = driverName;
+  const cont = $('#factories'); cont.innerHTML='';
+  list.forEach(it=>{
+    const d=document.createElement('div');
+    d.className='factory';
+    d.innerHTML=`<div class="name">${it.name}</div><div class="count">${it.count}</div>`;
+    cont.appendChild(d);
+  });
 }
 function buildMonthChips(rowsCPF){
-  const cont=document.getElementById('month-chips'); cont.innerHTML='';
-  const monthsWithData=new Set(rowsCPF.map(r=>r._mes));
-  for(let m=0;m<12;m++){const div=document.createElement('div'); div.className='chip'+(monthsWithData.has(m)?'':' disabled'); div.textContent=monthName(m); div.dataset.month=m;
-    div.onclick=()=>{ if(!monthsWithData.has(m)) return; monthActive=(monthActive===m?null:m); Array.from(cont.children).forEach(ch=>{ch.classList.remove('sel'); if(Number(ch.dataset.month)===monthActive) ch.classList.add('sel');}); render(); };
-    cont.appendChild(div);}
+  const cont=$('#month-chips'); cont.innerHTML='';
+  const months=new Set(rowsCPF.map(r=>r._mes));
+  for(let m=0;m<12;m++){
+    const div=document.createElement('div');
+    div.className='chip'+(months.has(m)?'':' disabled');
+    div.textContent=monthName(m); div.dataset.month=m;
+    div.onclick=()=>{ if(!months.has(m)) return; monthActive=(monthActive===m?null:m); Array.from(cont.children).forEach(ch=>{ch.classList.remove('sel'); if(Number(ch.dataset.month)===monthActive) ch.classList.add('sel');}); render(); };
+    cont.appendChild(div);
+  }
 }
-document.querySelectorAll('input[name="rev"]').forEach(r=>r.addEventListener('change',()=>{revendaFilter=document.querySelector('input[name="rev"]:checked').value; render();}));
-(async function init(){
-  try{cpfDigits=localStorage.getItem('ws_cpf_digits'); cpfMasked=localStorage.getItem('ws_cpf_masked');}catch(e){}
-  if(!cpfDigits){location.href='login.html'; return;}
-  document.getElementById('cpf-badge').textContent=cpfMasked||'—';
+// radios
+document.querySelectorAll('input[name="rev"]').forEach(radio=> radio.addEventListener('change',()=>{
+  revendaFilter = document.querySelector('input[name="rev"]:checked').value;
+  render();
+}));
+
+// init
+(async function(){
+  try{ cpfDigits = localStorage.getItem('ws_cpf_digits'); cpfMasked = localStorage.getItem('ws_cpf_masked'); driverName = localStorage.getItem('ws_motorista') || ''; }catch(e){}
+  if(!cpfDigits){ location.href='login.html'; return; }
+  document.getElementById('cpf-badge')?.innerText = cpfMasked || '—';
   await loadCSV();
-  const rowsCPF=allRows.filter(r=>r['_cpfDigits']===cpfDigits);
-  if(!rowsCPF.length){alert('CPF não encontrado no CSV'); location.href='login.html'; return;}
-  driverName=(rowsCPF[0]['MOTORISTA']||'Motorista'); document.getElementById('driver').value=driverName;
+  const rowsCPF = allRows.filter(r=> r['_cpfDigits'] === cpfDigits);
+  if(!rowsCPF.length){ alert('CPF não encontrado no CSV'); return; }
+  if(!driverName) driverName = (rowsCPF[0]['MOTORISTA'] || 'Motorista');
+  document.getElementById('driver').value = driverName;
   buildMonthChips(rowsCPF);
   render();
 })();
