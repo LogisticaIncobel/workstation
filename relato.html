@@ -1,0 +1,52 @@
+<!doctype html>
+<html lang="pt-br">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Relato • Incobel</title>
+  <style>
+:root{
+  --brand:#0e5ec3; --bg1:#051c3a; --bg2:#08325f; --bg3:#0a3e76;
+  --panel:rgba(255,255,255,.06); --line:rgba(255,255,255,.18);
+  --text:#f2f6fb; --muted:#c7d6ea; --btn:#89c3ff; --btn-text:#0a1b33;
+  --radius:14px; --shadow:0 12px 28px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+body{margin:0;background:linear-gradient(180deg,var(--bg1), var(--bg2) 60%, var(--bg3));
+     font:15px/1.45 system-ui,Segoe UI,Roboto,Arial;color:var(--text)}
+header{display:flex;align-items:center;gap:12px;padding:10px 14px;border-bottom:1px solid var(--line);background:var(--panel)}
+header img.logo{height:34px;width:auto}
+header .title{font-weight:800;letter-spacing:.5px}
+.container{max-width:980px;margin:0 auto;padding:14px;display:flex;justify-content:center;align-items:center;min-height:calc(100vh - 70px)}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:14px;box-shadow:var(--shadow);padding:24px;text-align:center;max-width:650px}
+.card p{margin:0 0 18px}
+.menu-btn{display:block;width:100%;padding:14px;margin:10px 0;background:var(--btn);color:var(--btn-text);
+  border-radius:12px;font-weight:900;text-decoration:none;border:1px solid var(--line);cursor:pointer}
+.menu-btn:hover{filter:brightness(1.05)}
+.btn-secondary{background:#6c8db8;color:#07192f;display:inline-block;width:auto;padding:10px 16px;margin-top:14px;text-decoration:none;border-radius:12px;font-weight:700}
+.btn-secondary:hover{filter:brightness(1.05)}
+  </style>
+</head>
+<body>
+  <header>
+    <img class="logo" src="LOGO.png" alt="Logo">
+    <div class="title">Relato</div>
+    <div style="margin-left:auto"><a class="btn-secondary" href="menu.html" title="Voltar ao Menu">← Menu</a></div>
+  </header>
+
+  <div class="container">
+    <div class="card">
+      <p>Clique abaixo para acessar o aplicativo do ponto, após clicar você será redirecionado para abrir ou instalar e abrir o aplicativo.</p>
+      <p>O acesso é através de seu CPF e uma senha, em caso de erro, esquecimento de senha, ou primeiro acesso, contate o time de Gente &amp; Gestão.</p>
+      <p>Para contatar, retorne até a página inicial e clique em "Contatos".</p>
+
+      <a class="menu-btn" href="https://logisticaincobel.github.io/ID-QUICKGESTAO/" target="_blank">Fazer um relato</a>
+    </div>
+  </div>
+
+<script>
+  // garante login
+  try{ if(!localStorage.getItem('ws_cpf_digits')) location.href='login.html'; }catch(e){}
+</script>
+</body>
+</html>
